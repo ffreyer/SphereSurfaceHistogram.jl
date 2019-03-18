@@ -70,23 +70,38 @@ end
 # NOTE
 # Wow this converges really fast
 function partition_sphere_optim2(dA, max_iter = 10)
-    area(ϕ1, ϕ2, θ1, θ2) = (ϕ2 - ϕ1) * (cos(θ1) - cos(θ2))
+    # area(ϕ1, ϕ2, θ1, θ2) = (ϕ2 - ϕ1) * (cos(θ1) - cos(θ2))
     new_dA = dA
     N = round(Int64, 4pi/dA)
+    _iterations = 0
     for i in 1:max_iter
+        _iterations = i
         thetas, dphis, phi_divs = partition_sphere2(new_dA)
         next_N = sum(phi_divs)
         if N == next_N
-            @info "Finished after $i iterations"
             break
         else
-            @info "$N -> $next_N"
             N = next_N
             new_dA = 4pi / N
         end
     end
-    @info "Optimized dA = $new_dA ($N)"
-    partition_sphere2(new_dA)
+
+    thetas, dphis, phi_divs = partition_sphere2(new_dA)
+
+    # Some stats
+    dAs = map(enumerate(dphis)) do t
+        i, dphi = t
+        dphi * (cos(thetas[i]) - cos(thetas[i+1]))
+    end
+    dA_mean = round(mean(dAs), sigdigits = 3)
+    dA_std = round(std(dAs), sigdigits = 3)
+    dA_perc = round(100dA_std/dA_mean, sigdigits = 3)
+    @info(
+        "Optimized dA = $dA_mean ± $dA_std  ($(dA_perc)% @ " *
+        "$(sum(phi_divs)) bins after $_iterations Iterations)"
+    )
+
+    thetas, dphis, phi_divs
 end
 
 

@@ -2,6 +2,7 @@ module SphereSurfaceHistogram
 
 using Reexport
 @reexport using StaticArrays
+import Statistics: mean, std
 
 include("utils.jl")
 export rand_spin, binary_find, to_cartesian
