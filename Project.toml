@@ -1,0 +1,10 @@
+name = "SphereSurfaceHistogram"
+uuid = "b3f7556e-2c1d-50f9-83b1-7c1b68b21cf8"
+authors = ["F Freyer <frederic481994@hotmail.de>"]
+version = "0.1.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
