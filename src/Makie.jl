@@ -1,7 +1,11 @@
 @reexport using GeometryTypes, Colors, Makie
 
 
-function to_rects(thetas, dphis, phi_divs, extrude=0)
+function to_rects(B::SSHBinner, extrude=0)
+    thetas = B.thetas
+    phi_divs = B.phi_divisions
+    dphis = 2pi ./ phi_divs
+
     vertices = Point3f0[]
     faces = Face{3, Int}[]
 
@@ -58,7 +62,11 @@ function to_rects(thetas, dphis, phi_divs, extrude=0)
 end
 
 
-function to_dual_mesh(thetas, dphis, phi_divs)
+function to_dual_mesh(B::SSHBinner)
+    thetas = B.thetas
+    phi_divs = B.phi_divisions
+    dphis = 2pi ./ phi_divs
+
     vertices = Point3f0[]
     faces = Face{3, Int}[]
 
@@ -148,7 +156,11 @@ function to_dual_mesh(thetas, dphis, phi_divs)
 end
 
 
-function dual_points(thetas, dphis, phi_divs)
+function dual_points(B::SSHBinner)
+    thetas = B.thetas
+    phi_divs = B.phi_divisions
+    dphis = 2pi ./ phi_divs
+
     points = Point3f0[Point3f0(0, 0, 1)]
 
     for i in 2:length(thetas)-2

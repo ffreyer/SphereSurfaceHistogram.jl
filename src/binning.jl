@@ -1,3 +1,45 @@
+struct SSHBinner
+    thetas::Vector{Float64}
+    phi_divisions::Vector{Int64}
+
+    # bin_many helpers
+    zs::Vector{Float64}
+    phi_N_over_2pi::Vector{Float64}
+    cumsum::Vector{Int64}
+
+    bins::Vector{Int64}
+end
+
+function SSHBinner(thetas::Vector{Float64}, phi_divisions::Vector{Int64})
+    # Precalculate N/2pi for bin_many!
+    # use slightly more than 2pi to guarantee phi * phi_N_over_pi ∈ [0, 1)
+    PI_PLUS = 2.0pi + 1e-14
+    phi_N_over_2pi = phi_divisions ./ PI_PLUS
+
+    # Precalculate z(θ) for bin_many!
+    # move slightly to negative values to guarantee that for an input value
+    # value[3] >= minimum(zs)
+    zs = cos.(thetas) .- 1e-14 # 1...-1
+
+    # Also precalculate cumulative number of bins for each theta (from 0..pi)
+    _cumsum = cumsum(phi_divisions)
+
+    N_bins = sum(phi_divisions)
+    bins = zeros(Int64, N_bins)
+    SSHBinner(thetas, phi_divisions, zs, phi_N_over_2pi, _cumsum, bins)
+end
+
+"""
+    SSHBinner(N_bins)
+
+Generate a Sphere Surface Histogram Binner with approximately N_bins.
+"""
+function SSHBinner(N_bins::Int64)
+    thetas, phi_divisions = partition_sphere_optim2(4pi/N_bins)
+    SSHBinner(thetas, phi_divisions)
+end
+
+
 function partition_sphere2(dA, factor=sqrt(pi))
     # Use symmetry - only 0..pi/2 needed (± some delta if center of dA @ pi/2)
 
@@ -63,7 +105,7 @@ function partition_sphere2(dA, factor=sqrt(pi))
         end
     end
 
-    return thetas, 2pi ./ phi_divs, phi_divs
+    return thetas, phi_divs
 end
 
 
@@ -76,7 +118,7 @@ function partition_sphere_optim2(dA, max_iter = 10)
     _iterations = 0
     for i in 1:max_iter
         _iterations = i
-        thetas, dphis, phi_divs = partition_sphere2(new_dA)
+        thetas, phi_divs = partition_sphere2(new_dA)
         next_N = sum(phi_divs)
         if N == next_N
             break
@@ -86,7 +128,7 @@ function partition_sphere_optim2(dA, max_iter = 10)
         end
     end
 
-    thetas, dphis, phi_divs = partition_sphere2(new_dA)
+    thetas, phi_divs = partition_sphere2(new_dA)
 
     # Some stats
     # dAs = map(enumerate(dphis)) do t
@@ -101,71 +143,105 @@ function partition_sphere_optim2(dA, max_iter = 10)
     #     "$(sum(phi_divs)) bins after $_iterations Iterations)"
     # )
 
-    thetas, dphis, phi_divs
+    thetas, phi_divs
 end
 
 
-const PI_PLUS = Float64(pi) + 1e-14
-function bin_many!(bins, thetas, dphis, phi_divs, values)
-    zs = cos.(thetas) .- 1e-10 # 1...-1
-    skipped_over = cumsum(phi_divs)
-    # TNOPI = (length(thetas) - 1) / PI_PLUS
-    PNOPIs = phi_divs / 2PI_PLUS
-
-    for value in values
-        # 1...N-1
-        # TODO Needs to be optimized - binary search tree?
-        # welp...
-        # theta_index = binary_find(value[3], zs)
-        theta_index = 0
-        for i in 1:length(zs)-1
-            if value[3] >= zs[i+1]
-                theta_index = i
-                break
-            end
+function bin!(B::SSHBinner, value)
+    theta_index = 0
+    for i in 1:length(B.zs)-1
+        if value[3] >= B.zs[i+1]
+            theta_index = i
+            break
         end
-
-        # NOTE MUCH faster! ~28%!
-        # NOTE but also totally wrong because thetas aren't linearly defined!
-        # theta = acos(value[3])
-        # theta_index = floor(Int64, theta * TNOPI) + 1
-        # if theta_index != floor(Int64, theta * TNOPI) + 1
-        #     println(
-        #         "$theta_index != $(floor(Int64, theta * TNOPI) + 1)",
-        #         " for $theta ($(value[3]))"
-        #     )
-        # end
-
-
-        # yes it's the same!
-        # @assert theta_index == binary_find(value[3], zs) "$value"
-
-        phi_index = if phi_divs[theta_index] == 1
-            1
-        else
-            # Normalize xy-component
-            # y >= 0 for 0..pi, else y < 0
-            # acos(x) well defined for 0..pi
-            R = sqrt(value[1]^2 + value[2]^2)
-            phi = if value[2] >= 0.0
-                acos(value[1]/R)
-            else
-                2pi - acos(value[1]/R)
-            end
-
-            # min(⌊ϕ / Δϕ⌋ + 1, max_index)
-            # TODO This is also taking a lot of time
-            # min(
-            #     floor(Int64, phi / dphis[theta_index]) + 1,
-            #     phi_divs[theta_index]
-            # )
-            # A bit faster ~ 5%
-            floor(Int64, phi * PNOPIs[theta_index]) + 1
-        end
-
-        # "Skipped" shells
-        l = theta_index > 1 ? skipped_over[theta_index-1] : 0
-        bins[l+phi_index] += 1
     end
-    bins
+
+    phi_index = if B.phi_divisions[theta_index] == 1
+        1
+    else
+        # Normalize xy-component
+        # y >= 0 for 0..pi, else y < 0
+        # acos(x) well defined for 0..pi
+        R = sqrt(value[1]^2 + value[2]^2)
+        phi = if value[2] >= 0.0
+            acos(value[1]/R)
+        else
+            2pi - acos(value[1]/R)
+        end
+
+        floor(Int64, phi * B.phi_N_over_2pi[theta_index]) + 1
+    end
+
+    # Calculate position in bins
+    l = theta_index > 1 ? B.cumsum[theta_index-1] : 0
+    B.bins[l+phi_index] += 1
+    nothing
 end
+
+
+function bin_many!(B::SSHBinner, values)
+    for v in values
+        bin!(B, v)
+    end
+    nothing
+end
+
+
+# function bin_many!(B::SSHBinner, values)
+#     for value in values
+#         # 1...N-1
+#         # TODO Needs to be optimized - binary search tree?
+#         # welp...
+#         # theta_index = binary_find(value[3], zs)
+#         theta_index = 0
+#         for i in 1:length(B.zs)-1
+#             if value[3] >= B.zs[i+1]
+#                 theta_index = i
+#                 break
+#             end
+#         end
+#
+#         # NOTE MUCH faster! ~28%!
+#         # NOTE but also totally wrong because thetas aren't linearly defined!
+#         # theta = acos(value[3])
+#         # theta_index = floor(Int64, theta * TNOPI) + 1
+#         # if theta_index != floor(Int64, theta * TNOPI) + 1
+#         #     println(
+#         #         "$theta_index != $(floor(Int64, theta * TNOPI) + 1)",
+#         #         " for $theta ($(value[3]))"
+#         #     )
+#         # end
+#
+#
+#         # yes it's the same!
+#         # @assert theta_index == binary_find(value[3], zs) "$value"
+#
+#         phi_index = if B.phi_divisions[theta_index] == 1
+#             1
+#         else
+#             # Normalize xy-component
+#             # y >= 0 for 0..pi, else y < 0
+#             # acos(x) well defined for 0..pi
+#             R = sqrt(value[1]^2 + value[2]^2)
+#             phi = if value[2] >= 0.0
+#                 acos(value[1]/R)
+#             else
+#                 2pi - acos(value[1]/R)
+#             end
+#
+#             # min(⌊ϕ / Δϕ⌋ + 1, max_index)
+#             # TODO This is also taking a lot of time
+#             # min(
+#             #     floor(Int64, phi / dphis[theta_index]) + 1,
+#             #     phi_divs[theta_index]
+#             # )
+#             # A bit faster ~ 5%
+#             floor(Int64, phi * B.phi_N_over_2pi[theta_index]) + 1
+#         end
+#
+#         # "Skipped" shells
+#         l = theta_index > 1 ? B.cumsum[theta_index-1] : 0
+#         B.bins[l+phi_index] += 1
+#     end
+#     B.bins
+# end
