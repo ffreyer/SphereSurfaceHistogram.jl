@@ -89,17 +89,17 @@ function partition_sphere_optim2(dA, max_iter = 10)
     thetas, dphis, phi_divs = partition_sphere2(new_dA)
 
     # Some stats
-    dAs = map(enumerate(dphis)) do t
-        i, dphi = t
-        dphi * (cos(thetas[i]) - cos(thetas[i+1]))
-    end
-    dA_mean = round(mean(dAs), sigdigits = 3)
-    dA_std = round(std(dAs), sigdigits = 3)
-    dA_perc = round(100dA_std/dA_mean, sigdigits = 3)
-    @info(
-        "Optimized dA = $dA_mean ± $dA_std  ($(dA_perc)% @ " *
-        "$(sum(phi_divs)) bins after $_iterations Iterations)"
-    )
+    # dAs = map(enumerate(dphis)) do t
+    #     i, dphi = t
+    #     dphi * (cos(thetas[i]) - cos(thetas[i+1]))
+    # end
+    # dA_mean = round(mean(dAs), sigdigits = 3)
+    # dA_std = round(std(dAs), sigdigits = 3)
+    # dA_perc = round(100dA_std/dA_mean, sigdigits = 3)
+    # @info(
+    #     "Optimized dA = $dA_mean ± $dA_std  ($(dA_perc)% @ " *
+    #     "$(sum(phi_divs)) bins after $_iterations Iterations)"
+    # )
 
     thetas, dphis, phi_divs
 end
