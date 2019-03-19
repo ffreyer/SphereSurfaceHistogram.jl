@@ -51,7 +51,7 @@ function to_rects(thetas, dphis, phi_divs, extrude=0)
         pos_2 = to_cartesian(theta2, phi2) + extrude * Point3f0(0,0,-1)
         push!(vertices, pos_1)
         push!(vertices, pos_2)
-        push!(faces, Face(l, l+1+2k, l+2+2k))
+        push!(faces, Face(l, l+2+2k, l+1+2k))
     end
 
     GLNormalMesh(vertices = vertices, faces = faces)
