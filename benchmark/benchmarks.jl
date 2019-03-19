@@ -30,7 +30,7 @@ for N_bins in Int64[1e3, 1e4, 1e5, 1e6]
         spins = rand_spin(N_spins)
 
         suite[
-            "N_bins = $N_bins; N_spins = N_spins"
+            "N_bins = $N_bins; N_spins = $N_spins"
         ] = @benchmarkable bin_many!($bins, $thetas, $dphis, $phi_divs, $spins)
     end
 end
