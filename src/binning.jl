@@ -105,9 +105,12 @@ function partition_sphere_optim2(dA, max_iter = 10)
 end
 
 
+const PI_PLUS = Float64(pi) + 1e-14
 function bin_many!(bins, thetas, dphis, phi_divs, values)
-    zs = cos.(thetas) .- -1e-20 # 1...-1
+    zs = cos.(thetas) .- 1e-10 # 1...-1
     skipped_over = cumsum(phi_divs)
+    # TNOPI = (length(thetas) - 1) / PI_PLUS
+    PNOPIs = phi_divs / 2PI_PLUS
 
     for value in values
         # 1...N-1
@@ -121,6 +124,19 @@ function bin_many!(bins, thetas, dphis, phi_divs, values)
                 break
             end
         end
+
+        # NOTE MUCH faster! ~28%!
+        # NOTE but also totally wrong because thetas aren't linearly defined!
+        # theta = acos(value[3])
+        # theta_index = floor(Int64, theta * TNOPI) + 1
+        # if theta_index != floor(Int64, theta * TNOPI) + 1
+        #     println(
+        #         "$theta_index != $(floor(Int64, theta * TNOPI) + 1)",
+        #         " for $theta ($(value[3]))"
+        #     )
+        # end
+
+
         # yes it's the same!
         # @assert theta_index == binary_find(value[3], zs) "$value"
 
@@ -131,7 +147,7 @@ function bin_many!(bins, thetas, dphis, phi_divs, values)
             # y >= 0 for 0..pi, else y < 0
             # acos(x) well defined for 0..pi
             R = sqrt(value[1]^2 + value[2]^2)
-            phi = if value[2] >= 0
+            phi = if value[2] >= 0.0
                 acos(value[1]/R)
             else
                 2pi - acos(value[1]/R)
@@ -139,10 +155,12 @@ function bin_many!(bins, thetas, dphis, phi_divs, values)
 
             # min(⌊ϕ / Δϕ⌋ + 1, max_index)
             # TODO This is also taking a lot of time
-            min(
-                floor(Int64, phi / dphis[theta_index]) + 1,
-                phi_divs[theta_index]
-            )
+            # min(
+            #     floor(Int64, phi / dphis[theta_index]) + 1,
+            #     phi_divs[theta_index]
+            # )
+            # A bit faster ~ 5%
+            floor(Int64, phi * PNOPIs[theta_index]) + 1
         end
 
         # "Skipped" shells
