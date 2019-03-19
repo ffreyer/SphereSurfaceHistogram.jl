@@ -26,11 +26,12 @@ for N_bins in Int64[1e3, 1e4, 1e5, 1e6]
     thetas, dphis, phi_divs = partition_sphere_optim2(4pi/N_bins)
     N = sum(phi_divs)
     bins = zeros(Int64, N)
+    _suite = suite["N_bins = $N_bins"] = BenchmarkGroup()
     for N_spins in Int64[1e3, 1e4, 1e5, 1e6]
         spins = rand_spin(N_spins)
 
-        suite[
-            "N_bins = $N_bins; N_spins = $N_spins"
+        _suite[
+            "N_spins = $N_spins"
         ] = @benchmarkable bin_many!($bins, $thetas, $dphis, $phi_divs, $spins)
     end
 end
