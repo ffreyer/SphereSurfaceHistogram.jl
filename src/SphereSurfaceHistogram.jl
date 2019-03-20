@@ -1,8 +1,5 @@
 module SphereSurfaceHistogram
 
-include("utils.jl")
-# export binary_find, to_cartesian
-
 include("binning.jl")
 export SSHBinner
 export push!, append!
