@@ -3,6 +3,8 @@
 This package does histogram binning on a unit sphere. It can also generate
 a mesh where each vertex relates to a bin.
 
+Binning a single value takes on the order of `40ns`. 
+
 ```julia
 using SphereSurfaceHistogram
 
