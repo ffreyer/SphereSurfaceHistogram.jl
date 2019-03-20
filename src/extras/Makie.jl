@@ -1,7 +1,4 @@
-using Reexport
-@reexport using GeometryTypes, Colors, Makie
-import SphereSurfaceHistogram.to_cartesian
-
+using GeometryTypes, Colors, Makie
 
 function to_cartesian(theta, phi)
     Vec3f0(

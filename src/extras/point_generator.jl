@@ -1,7 +1,6 @@
-using Reexport
-@reexport using StaticArrays
+using StaticArrays
 
-function rand_spin(N::Int64)
+function random_unit_vector(N::Int64)
     phis = 2 * pi * rand(Float64, N)
     cts = 2 * rand(Float64, N) .- 1
     sts = sqrt.(1. .- cts .* cts) # sin(acos(cts)) # max(0., )
