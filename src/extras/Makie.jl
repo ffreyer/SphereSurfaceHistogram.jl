@@ -175,3 +175,32 @@ function dual_points(B::SSHBinner)
 
     points
 end
+
+
+function to_hue(B::SSHBinner, s=1.0, v=1.0, a=1.0)
+    bins = B.bins ./ maximum(B.bins)
+    map(bins) do k
+        HSVA(360k, s, v, a)
+    end
+end
+
+function to_alpha(B::SSHBinner, r=0.2, g=0.4, b = 0.8)
+    bins = B.bins ./ maximum(B.bins)
+    map(bins) do k
+        RGBA(r, g, b, k)
+    end
+end
+
+function plot(B::SSHBinner, color_method=to_hue)
+    mesh(SSH.to_dual_mesh(B), color = _colors, transparency = false)
+end
+
+function plot_debug(B::SSHBinner, color_method = to_hue)
+    extrude = 0.1f0
+    R0 = 99f-2
+    s = Mat4f0((R0 + extrude), 0, 0, 0, 0, (R0 + extrude), 0, 0, 0, 0, (R0 + extrude), 0, 0, 0, 0, 1)
+    scene1 = mesh(s * SSH.to_dual_mesh(B), color = _colors, transparency = false)
+    mesh!(scene1, SSH.to_rects(B, extrude), color = RGBA(1, 1, 1, 0.2), transparency = true)
+    scatter!(scene1, (1f0+extrude) .* SSH.dual_points(B), color=:black, markersize=0.01)
+    scene
+end
