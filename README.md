@@ -5,6 +5,14 @@ a mesh where each vertex relates to a bin.
 
 Binning a single value takes on the order of `40ns`. 
 
+---
+
+Example plot with `1938` bins and `10 000` random unit vectors pushed. The left side shows `plot_debug(binner)`, i.e. the histogram with bin areas and centers indicated. The right side shows `plot(binner)`, i.e. colors relative to the respective bin filling.
+
+![](https://github.com/ffreyer/SphereSurfaceHistogram.jl/blob/gh-pages/example/random_unit_vectors.png)
+
+---
+
 ```julia
 using SphereSurfaceHistogram
 
@@ -45,7 +53,3 @@ bin_area_mesh = to_rects(binner)
 # Color mapping
 colors = to_hue(binner)
 ```
-
-Example plot with `1938` bins and `10 000` random unit vectors pushed. The left side shows `plot_debug(binner)`, i.e. the histogram with bin areas and centers indicated. The right side shows `plot(binner)`, i.e. colors relative to the respective bin filling.
-
-![](https://github.com/ffreyer/SphereSurfaceHistogram.jl/blob/gh-pages/example/random_unit_vectors.png)
