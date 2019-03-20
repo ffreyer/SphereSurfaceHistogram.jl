@@ -1,2 +1,4 @@
 .DS_Store
 /Manifest.toml
+benchmark/tune.json
+test/local_testing.jl
