@@ -204,7 +204,15 @@ Bins an array of values (three dimensional unit vectors).
 """
 function Base.append!(B::SSHBinner, values)
     for v in values
-        bin!(B, v)
+        push!(B, v)
     end
     nothing
+end
+
+
+################################################################################
+# Cosmetics
+
+function Base.show(io::IO, B::SSHBinner)
+    print(io, "SSHBinner with $(length(B.bins)) bins")
 end
