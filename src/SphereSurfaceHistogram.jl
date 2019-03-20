@@ -10,7 +10,7 @@ export bin!, bin_many!
 #include("Makie.jl")
 _DIR = @__DIR__
 const PATHS = Dict(
-    :point_gen => _DIR * "/extras/point_gen.jl",
+    :point_gen => _DIR * "/extras/point_generator.jl",
     :Makie => _DIR * "/extras/Makie.jl"
 )
 

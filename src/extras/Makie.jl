@@ -1,5 +1,15 @@
 using Reexport
 @reexport using GeometryTypes, Colors, Makie
+import SphereSurfaceHistogram.to_cartesian
+
+
+function to_cartesian(theta, phi)
+    Vec3f0(
+        sin(theta) * cos(phi),
+        sin(theta) * sin(phi),
+        cos(theta)
+    )
+end
 
 
 function to_rects(B::SSHBinner, extrude=0)
@@ -192,15 +202,17 @@ function to_alpha(B::SSHBinner, r=0.2, g=0.4, b = 0.8)
 end
 
 function plot(B::SSHBinner, color_method=to_hue)
-    mesh(SSH.to_dual_mesh(B), color = _colors, transparency = false)
+    _colors = color_method(B)
+    Makie.mesh(to_dual_mesh(B), color = _colors, transparency = false)
 end
 
 function plot_debug(B::SSHBinner, color_method = to_hue)
+    _colors = color_method(B)
     extrude = 0.1f0
     R0 = 99f-2
     s = Mat4f0((R0 + extrude), 0, 0, 0, 0, (R0 + extrude), 0, 0, 0, 0, (R0 + extrude), 0, 0, 0, 0, 1)
-    scene1 = mesh(s * SSH.to_dual_mesh(B), color = _colors, transparency = false)
-    mesh!(scene1, SSH.to_rects(B, extrude), color = RGBA(1, 1, 1, 0.2), transparency = true)
-    scatter!(scene1, (1f0+extrude) .* SSH.dual_points(B), color=:black, markersize=0.01)
-    scene
+    scene1 = Makie.mesh(s * to_dual_mesh(B), color = _colors, transparency = false)
+    Makie.mesh!(scene1, to_rects(B, extrude), color = RGBA(1, 1, 1, 0.2), transparency = true)
+    Makie.scatter!(scene1, (1f0+extrude) .* dual_points(B), color=:black, markersize=0.01)
+    scene1
 end

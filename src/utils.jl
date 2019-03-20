@@ -16,12 +16,3 @@ function binary_find(x, xs, start=1, stop=length(xs))
         end
     end
 end
-
-
-function to_cartesian(theta, phi)
-    Vec3f0(
-        sin(theta) * cos(phi),
-        sin(theta) * sin(phi),
-        cos(theta)
-    )
-end
