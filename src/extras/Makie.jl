@@ -1,5 +1,11 @@
 using GeometryTypes, Colors, Makie
 
+"""
+    to_cartesian(theta, phi)
+
+Calculates the cartesian vector (x, y, z) for a given pair of angles (polar/z
+angle theta, azimut/xy angle phi).
+"""
 function to_cartesian(theta, phi)
     Vec3f0(
         sin(theta) * cos(phi),
@@ -9,6 +15,14 @@ function to_cartesian(theta, phi)
 end
 
 
+"""
+    to_rects(B::SSHBinner, extrude=0)
+
+Generates a mesh where each face represents a bin.
+
+`extrude` allows faces to be moved outwards (≈ (1 + extrude)eᵣ). For
+`extrude > 0` the faces will sperate, makign their shape easier to see.
+"""
 function to_rects(B::SSHBinner, extrude=0)
     vertices = Point3f0[]
     faces = Face{3, Int}[]
@@ -72,6 +86,16 @@ function to_rects(B::SSHBinner, extrude=0)
 end
 
 
+"""
+    to_dual_mesh(B::SSHBinner)
+
+Generates a mesh where each vertex represents (the center of) a bin.
+
+This type of mesh makes it easy to visualize the histogram with colors. Mapping
+each bin-filling to a color (e.g. using `to_hue(B)`) gives colors
+corresponding to the vertices of this mesh (in order). This can be plotted with
+`Makie` using `Makie.mesh(to_dual_mesh(B), color = colors)`.
+"""
 function to_dual_mesh(B::SSHBinner)
     vertices = Point3f0[]
     faces = Face{3, Int}[]
@@ -166,6 +190,12 @@ function to_dual_mesh(B::SSHBinner)
 end
 
 
+"""
+    dual_points(B::SSHBinner)
+
+Generates the same points (vertices) as `to_dual_mesh(B)`, but doesn't generate
+the full mesh.
+"""
 function dual_points(B::SSHBinner)
     points = Point3f0[Point3f0(0, 0, 1)]
 
@@ -184,13 +214,25 @@ function dual_points(B::SSHBinner)
 end
 
 
+"""
+    to_hue(B::SSHBinner[, s=1.0, v=1.0, a=1.0])
+
+Maps each bin filling to a hue relative to the maximum bin filling.
+"""
 function to_hue(B::SSHBinner, s=1.0, v=1.0, a=1.0)
-    bins = B.bins ./ maximum(B.bins)
+    # hue is cyclic, so the maximum should be < 1.0 (360)
+    bins = 0.8 * B.bins ./ maximum(B.bins)
     map(bins) do k
         HSVA(360k, s, v, a)
     end
 end
 
+
+"""
+    to_alpha(B::SSHBinner[, r=0.2, g=0.4, b=0.8])
+
+Maps each bin filling to the alpha level of a color (given through r, g, b).
+"""
 function to_alpha(B::SSHBinner, r=0.2, g=0.4, b = 0.8)
     bins = B.bins ./ maximum(B.bins)
     map(bins) do k
@@ -198,11 +240,24 @@ function to_alpha(B::SSHBinner, r=0.2, g=0.4, b = 0.8)
     end
 end
 
+
+"""
+    plot(B::SSHBinner[, color_method = to_hue])
+
+Plots a sphere where each bin filling is mapped to a color through color_method.
+"""
 function plot(B::SSHBinner, color_method=to_hue)
     _colors = color_method(B)
     Makie.mesh(to_dual_mesh(B), color = _colors, transparency = false)
 end
 
+
+"""
+    plot_debug(B::SSHBinner[, color_method = to_hue])
+
+Plots a sphere with colors representing bin fillings, approximate bin area
+(rectangles) and points at the bin centers. 
+"""
 function plot_debug(B::SSHBinner, color_method = to_hue)
     _colors = color_method(B)
     extrude = 0.1f0

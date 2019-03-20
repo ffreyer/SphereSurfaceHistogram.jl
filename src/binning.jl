@@ -34,12 +34,20 @@ end
 
 Generate a Sphere Surface Histogram Binner with approximately N_bins.
 """
+SSHBinner(N_bins::Real) = SSHBinner(round(Int64, N_bins))
 function SSHBinner(N_bins::Int64)
     thetas, phi_divisions = partition_sphere_optim2(4pi/N_bins)
     SSHBinner(thetas, phi_divisions)
 end
 
 
+"""
+    partition_sphere2(dA[, factor=sqrt(pi)])
+
+Partitions a sphere into bins, where each bin except the ones around z≈0 has
+equal area dA. The number of divisions in ϕ (0..2π) is restricted to powers of
+2 and the divisions of θ vary to keep dA constant.
+"""
 function partition_sphere2(dA, factor=sqrt(pi))
     # Use symmetry - only 0..pi/2 needed (± some delta if center of dA @ pi/2)
 
@@ -109,9 +117,14 @@ function partition_sphere2(dA, factor=sqrt(pi))
 end
 
 
-# NOTE
-# Wow this converges really fast
+"""
+    partition_sphere_optim2(dA[max_iter = 10])
+
+Optimizes the sphere partitioning by modifying dA (the number of bins). After a
+few iterations, dA becomes consistent for all bins.
+"""
 function partition_sphere_optim2(dA, max_iter = 10)
+    # NOTE this converges really fast
     # area(ϕ1, ϕ2, θ1, θ2) = (ϕ2 - ϕ1) * (cos(θ1) - cos(θ2))
     new_dA = dA
     N = round(Int64, 4pi/dA)
@@ -147,7 +160,12 @@ function partition_sphere_optim2(dA, max_iter = 10)
 end
 
 
-function bin!(B::SSHBinner, value)
+"""
+    push!(B::SSHBinner, value)
+
+Bins a single value (three dimensional unit vector).
+"""
+function Base.push!(B::SSHBinner, value)
     theta_index = 0
     for i in 1:length(B.zs)-1
         if value[3] >= B.zs[i+1]
@@ -179,69 +197,14 @@ function bin!(B::SSHBinner, value)
 end
 
 
-function bin_many!(B::SSHBinner, values)
+"""
+    append!(B::SSHBinner, values)
+
+Bins an array of values (three dimensional unit vectors).
+"""
+function Base.append!(B::SSHBinner, values)
     for v in values
         bin!(B, v)
     end
     nothing
 end
-
-
-# function bin_many!(B::SSHBinner, values)
-#     for value in values
-#         # 1...N-1
-#         # TODO Needs to be optimized - binary search tree?
-#         # welp...
-#         # theta_index = binary_find(value[3], zs)
-#         theta_index = 0
-#         for i in 1:length(B.zs)-1
-#             if value[3] >= B.zs[i+1]
-#                 theta_index = i
-#                 break
-#             end
-#         end
-#
-#         # NOTE MUCH faster! ~28%!
-#         # NOTE but also totally wrong because thetas aren't linearly defined!
-#         # theta = acos(value[3])
-#         # theta_index = floor(Int64, theta * TNOPI) + 1
-#         # if theta_index != floor(Int64, theta * TNOPI) + 1
-#         #     println(
-#         #         "$theta_index != $(floor(Int64, theta * TNOPI) + 1)",
-#         #         " for $theta ($(value[3]))"
-#         #     )
-#         # end
-#
-#
-#         # yes it's the same!
-#         # @assert theta_index == binary_find(value[3], zs) "$value"
-#
-#         phi_index = if B.phi_divisions[theta_index] == 1
-#             1
-#         else
-#             # Normalize xy-component
-#             # y >= 0 for 0..pi, else y < 0
-#             # acos(x) well defined for 0..pi
-#             R = sqrt(value[1]^2 + value[2]^2)
-#             phi = if value[2] >= 0.0
-#                 acos(value[1]/R)
-#             else
-#                 2pi - acos(value[1]/R)
-#             end
-#
-#             # min(⌊ϕ / Δϕ⌋ + 1, max_index)
-#             # TODO This is also taking a lot of time
-#             # min(
-#             #     floor(Int64, phi / dphis[theta_index]) + 1,
-#             #     phi_divs[theta_index]
-#             # )
-#             # A bit faster ~ 5%
-#             floor(Int64, phi * B.phi_N_over_2pi[theta_index]) + 1
-#         end
-#
-#         # "Skipped" shells
-#         l = theta_index > 1 ? B.cumsum[theta_index-1] : 0
-#         B.bins[l+phi_index] += 1
-#     end
-#     B.bins
-# end

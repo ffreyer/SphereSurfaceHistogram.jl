@@ -5,7 +5,7 @@ include("utils.jl")
 
 include("binning.jl")
 export SSHBinner
-export bin!, bin_many!
+export push!, append!
 
 #include("Makie.jl")
 _DIR = @__DIR__

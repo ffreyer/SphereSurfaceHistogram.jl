@@ -1,5 +1,10 @@
 using StaticArrays
 
+"""
+    random_unit_vector(N)
+
+Generates N random unit vectors, i.e. random points on a unit sphere.
+"""
 function random_unit_vector(N::Int64)
     phis = 2 * pi * rand(Float64, N)
     cts = 2 * rand(Float64, N) .- 1
