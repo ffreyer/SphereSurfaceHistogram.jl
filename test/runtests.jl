@@ -31,11 +31,28 @@ end
 
 @testset "SphereSurfaceHistogram.jl" begin
 
+    # These should pass without issues
+    @testset "Edge Cases" begin
+        B = SSHBinner(1_000)
+        push!(B, [0., 0., 1.])
+        @test true
+        push!(B, [0., 0., -1.])
+        @test true
+        push!(B, [0., 1., 0.])
+        @test true
+        push!(B, [0., -1., 0.])
+        @test true
+        push!(B, [1., 0., 0.])
+        @test true
+        push!(B, [-1., 0., 0.])
+        @test true
+    end
+
     @testset "Flat Histogram" begin
         for _ in 1:10
             N = floor(Int64, 1_000_000rand()) + 1_000
             B = SSHBinner(N)
-            bin_many!(B, dual_points(B))
+            append!(B, dual_points(B))
             @test all(B.bins .== 1)
         end
     end
