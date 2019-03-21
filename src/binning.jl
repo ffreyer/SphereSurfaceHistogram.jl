@@ -6,6 +6,7 @@ struct SSHBinner
     zs::Vector{Float64}
     phi_N_over_2pi::Vector{Float64}
     cumsum::Vector{Int64}
+    N_thetas::Float64
 
     bins::Vector{Int64}
 end
@@ -19,14 +20,18 @@ function SSHBinner(thetas::Vector{Float64}, phi_divisions::Vector{Int64})
     # Precalculate z(θ) for bin_many!
     # move slightly to negative values to guarantee that for an input value
     # value[3] >= minimum(zs)
-    zs = cos.(thetas) .- 1e-14 # 1...-1
+    zs = cos.(thetas) #.- 1e-14 # 1...-1
+    zs[end] -= 1e-14
 
     # Also precalculate cumulative number of bins for each theta (from 0..pi)
     _cumsum = cumsum(phi_divisions)
 
+    # to avoid conversions to Float64
+    N_thetas = Float64(length(thetas)-1)
+
     N_bins = sum(phi_divisions)
     bins = zeros(Int64, N_bins)
-    SSHBinner(thetas, phi_divisions, zs, phi_N_over_2pi, _cumsum, bins)
+    SSHBinner(thetas, phi_divisions, zs, phi_N_over_2pi, _cumsum, N_thetas, bins)
 end
 
 """
@@ -160,19 +165,71 @@ function partition_sphere_optim2(dA, max_iter = 10)
 end
 
 
+@fastmath @inline function fast_theta_index_approximation(x::Float64, l::Float64)
+    # trunc faster than floor
+    # Brackets cause llvm code to be `fmul` rather than `afoldl`, much faster
+    # equivalent to
+    # trunc(Int64, l*(0.5 - (7x + x^5 + x^9 + x^17 + x^31) / 22)
+    # which is ≈ trunc(Int64, l*acos(x))
+    trunc(Int64,
+        l * (0.5 - x*(
+            0.3181818181818182 + ((((x*x)*x)*x)*0.045454545454545456)*(
+                1.0 + (((x*x)*x)*x) * (
+                    1.0 + (((((((x*x)*x)*x)*x)*x)*x)*x)*(
+                        1.0 + (((((((((((((x*x)*x)*x)*x)*x)*x)*x)*x)*x)*x)*x)*x)*x)
+                    )
+                )
+            )
+        ))
+    ) + 1
+end
+
+
+# Tested for 10, 1000, 10_000_000 bins, each with 1_000_000 random spins pushed
+@inline function fast_theta_index_search(B::SSHBinner, value::Float64)
+    index = fast_theta_index_approximation(value, B.N_thetas)
+    # @info index
+    # if B.zs[index] < value <= B.zs[index+1]
+    # return index
+    if value > B.zs[index]
+        index -= 1
+        while value > B.zs[index]
+            index -= 1
+        end
+        return index
+    elseif B.zs[index] >= value
+        index += 1
+        while B.zs[index] >= value
+            index += 1
+        end
+        return index-1
+    end
+    return index
+end
+
+
+
 """
     push!(B::SSHBinner, value)
 
 Bins a single value (three dimensional unit vector).
 """
 function Base.push!(B::SSHBinner, value)
-    theta_index = 0
-    for i in 1:length(B.zs)-1
-        if value[3] >= B.zs[i+1]
-            theta_index = i
-            break
-        end
-    end
+    # theta_index = 0
+    # for i in 1:length(B.zs)-1
+    #     if value[3] >= B.zs[i+1]
+    #         theta_index = i
+    #         break
+    #     end
+    # end
+    theta_index = fast_theta_index_search(B, value[3])
+
+    # @info "Hi"
+
+    # if theta_index != fast_theta_index_search(B, value[3])
+    #     x = fast_theta_index_search(B, value[3])
+    #     @warn "$theta_index != $x"
+    # end
 
     phi_index = if B.phi_divisions[theta_index] == 1
         1
@@ -184,10 +241,10 @@ function Base.push!(B::SSHBinner, value)
         phi = if value[2] >= 0.0
             acos(value[1]/R)
         else
-            2pi - acos(value[1]/R)
+            2.0pi - acos(value[1]/R)
         end
 
-        floor(Int64, phi * B.phi_N_over_2pi[theta_index]) + 1
+        trunc(Int64, phi * B.phi_N_over_2pi[theta_index]) + 1
     end
 
     # Calculate position in bins
@@ -205,6 +262,18 @@ Bins an array of values (three dimensional unit vectors).
 function Base.append!(B::SSHBinner, values)
     for v in values
         push!(B, v)
+    end
+    nothing
+end
+
+"""
+    unsafe_append!(B::SSHBinner, values)
+
+Bins an arra of values (three dimensional unit vector) without boundschecks.
+"""
+function unsafe_append!(B::SSHBinner, values)
+    for v in values
+        @inbounds push!(B, v)
     end
     nothing
 end

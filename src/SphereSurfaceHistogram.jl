@@ -2,7 +2,7 @@ module SphereSurfaceHistogram
 
 include("binning.jl")
 export SSHBinner
-export push!, append!
+export push!, append!, unsafe_append!
 
 #include("Makie.jl")
 _DIR = @__DIR__
