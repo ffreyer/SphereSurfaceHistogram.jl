@@ -21,11 +21,9 @@ Plots a sphere with colors representing bin fillings, approximate bin area
 """
 function plot_debug(B::SSHBinner, color_method = to_hue)
     _colors = color_method(B)
-    extrude = 0.1f0
-    R0 = 99f-2
-    s = Mat4f0((R0 + extrude), 0, 0, 0, 0, (R0 + extrude), 0, 0, 0, 0, (R0 + extrude), 0, 0, 0, 0, 1)
-    scene1 = Makie.mesh(s * to_dual_mesh(B), color = _colors, transparency = false)
-    Makie.mesh!(scene1, to_rects(B, extrude), color = RGBA(1, 1, 1, 0.2), transparency = true)
-    Makie.scatter!(scene1, (1f0+extrude) .* dual_points(B), color=:black, markersize=0.01)
-    scene1
+    scene = Makie.mesh(to_dual_mesh(B), color = _colors, transparency = false)
+    Makie.linesegments!(scene, 1.001line_segments(B), color = :black)
+    # Makie.mesh!(scene1, to_rects(B, extrude), color = RGBA(1, 1, 1, 0.2), transparency = true)
+    Makie.scatter!(scene, 1.005dual_points(B), color=:black, markersize=0.01)
+    scene
 end
