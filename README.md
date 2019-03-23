@@ -36,7 +36,7 @@ include(SphereSurfaceHistogram.PATHS[:Makie])
 
 # generate a mesh where vertices correspond to bins and plot it using Makie
 # the color (hue) corresponds to the relative bin filling
-plot(binner)
+histogram(binner)
 
 # show the above with rectangles approximating bin areas and points marking
 # the bin centers.
