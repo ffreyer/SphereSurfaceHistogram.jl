@@ -197,7 +197,13 @@ function dual_points(B::SSHBinner)
 end
 
 
-function line_segments(B::SSHBinner)
+"""
+    line_segments_minimal(B::SSHBinner)
+
+Generates linesegments marking each bin area. This version is minimal in the
+sense that doesn't interpolate any points.
+"""
+function line_segments_minimal(B::SSHBinner)
     lines = Point3f0[]
 
     # first ring
@@ -236,7 +242,16 @@ function line_segments(B::SSHBinner)
 end
 
 
-function line_segments2(B::SSHBinner; N_fragments=64)
+"""
+    line_segments(B::SSHBinner; N_fragments = 32)
+
+Generates line segments marking each bin area. Extra points may be interpolated
+to generate smooth arcs.
+
+Specifically, points are added to an arc, such that it would include at least
+`N_fragments` points over an angle 0:pi.
+"""
+function line_segments(B::SSHBinner; N_fragments=32)
     lines = Point3f0[]
 
     # horizontal rings
@@ -245,9 +260,9 @@ function line_segments2(B::SSHBinner; N_fragments=64)
         # Number of steps
         R_xy = sqrt(1.0 - z^2)
         # circumference = 2πR, make more points if longer line
-        for k in 0:N_fragments-1
-            phi1 = 2pi * k / N_fragments
-            phi2 = 2pi * (k+1) / N_fragments
+        for k in 0:2N_fragments-1
+            phi1 = pi * k / N_fragments
+            phi2 = pi * (k+1) / N_fragments
             append!(lines, [to_cartesian(theta, phi1), to_cartesian(theta, phi2)])
         end
     end
