@@ -11,6 +11,43 @@ struct SSHBinner
     bins::Vector{Int64}
 end
 
+
+
+################################################################################
+### SSHBinner utilities (things from Base and more)
+################################################################################
+
+function Base.show(io::IO, B::SSHBinner)
+    print(io, "SSHBinner with $(length(B.bins)) bins")
+end
+
+Base.summary(io::IO, B::SSHBinner) = print(io, "$(typeof(B)){$(length(B))}")
+
+# "Return the number of elements in the collection."
+# would be sum(B.bins)
+# Maybe length(B.bins) makes more sense?
+Base.length(B::SSHBinner) = length(B.bins)
+
+# TODO: What should this be exactly?
+# - length per theta? -> phi_divisions
+# - summarized length per theta? (1x 1, 4x 4, 20x 32, ...)
+Base.size(B::SSHBinner) = B.phi_divisions
+
+# Clears bins
+function Base.empty!(B::SSHBinner)
+    B.bins .= 0
+    B
+end
+
+Base.maximum(B::SSHBinner) = maximum(B.bins)
+Base.minimum(B::SSHBinner) = minimum(B.bins)
+
+
+################################################################################
+### Constructor
+################################################################################
+
+
 function SSHBinner(thetas::Vector{Float64}, phi_divisions::Vector{Int64})
     # Precalculate N/2pi for bin_many!
     # use slightly more than 2pi to guarantee phi * phi_N_over_pi ∈ [0, 1)
@@ -165,6 +202,12 @@ function partition_sphere_optim2(dA, max_iter = 10)
 end
 
 
+################################################################################
+### binning (push, append)
+################################################################################
+
+
+
 @fastmath @inline function fast_theta_index_approximation(x::Float64, l::Float64)
     # trunc faster than floor
     # Brackets cause llvm code to be `fmul` rather than `afoldl`, much faster
@@ -276,12 +319,4 @@ function unsafe_append!(B::SSHBinner, values)
         @inbounds push!(B, v)
     end
     nothing
-end
-
-
-################################################################################
-# Cosmetics
-
-function Base.show(io::IO, B::SSHBinner)
-    print(io, "SSHBinner with $(length(B.bins)) bins")
 end
