@@ -7,7 +7,7 @@ Binning a single value takes on the order of `30ns`.
 
 ---
 
-Example plot with `1938` bins and `10 000` random unit vectors pushed. The left side shows `plot_debug(binner)`, i.e. the histogram with bin areas and centers indicated. The right side shows `plot(binner)`, i.e. colors relative to the respective bin filling.
+Example plot with `1938` bins and `10 000` random unit vectors pushed. The left side shows `plot_debug(binner)`, i.e. the histogram with bin areas and centers indicated. The right side shows `histogram(binner)`, i.e. colors relative to the respective bin filling.
 
 ![](https://github.com/ffreyer/SphereSurfaceHistogram.jl/blob/gh-pages/example/random_unit_vectors.png)
 
