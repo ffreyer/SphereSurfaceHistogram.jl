@@ -208,7 +208,7 @@ end
 
 
 
-@fastmath @inline function fast_theta_index_approximation(x::Float64, l::Float64)
+@fastmath @inline function fast_theta_index_approximation(x, l::Float64)
     # trunc faster than floor
     # Brackets cause llvm code to be `fmul` rather than `afoldl`, much faster
     # equivalent to
@@ -229,7 +229,7 @@ end
 
 
 # Tested for 10, 1000, 10_000_000 bins, each with 1_000_000 random spins pushed
-@inline function fast_theta_index_search(B::SSHBinner, value::Float64)
+@inline function fast_theta_index_search(B::SSHBinner, value)
     index = fast_theta_index_approximation(value, B.N_thetas)
     # @info index
     # if B.zs[index] < value <= B.zs[index+1]
