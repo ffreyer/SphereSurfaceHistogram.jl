@@ -210,7 +210,8 @@ end
 
 @fastmath @inline function fast_theta_index_approximation(x, l::Float64)
     # trunc faster than floor
-    # Brackets cause llvm code to be `fmul` rather than `afoldl`, much faster
+    # Brackets cause llvm code to be `fmul` rather than `afoldl`, much
+    # faster (~100x according to BenchmarkTools)
     # equivalent to
     # trunc(Int64, l*(0.5 - (7x + x^5 + x^9 + x^17 + x^31) / 22)
     # which is ≈ trunc(Int64, l*acos(x))
@@ -235,17 +236,15 @@ end
     # if B.zs[index] < value <= B.zs[index+1]
     # return index
     if value > B.zs[index]
-        index -= 1
-        while value > B.zs[index]
+        while true
             index -= 1
+            value <= B.zs[index] && (return index)
         end
-        return index
     elseif B.zs[index] >= value
-        index += 1
-        while B.zs[index] >= value
+        while true
             index += 1
+            B.zs[index] < value && (return index-1)
         end
-        return index-1
     end
     return index
 end
