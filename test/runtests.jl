@@ -32,6 +32,7 @@ end
 @testset "SphereSurfaceHistogram.jl" begin
 
     # These should pass without issues
+    # If they don't the binning fails for these edge cases.
     @testset "Edge Cases" begin
         B = SSHBinner(1_000)
         push!(B, [0., 0., 1.])
@@ -48,12 +49,26 @@ end
         @test true
     end
 
+
     @testset "Flat Histogram" begin
-        for _ in 1:10
-            N = floor(Int64, 1_000_000rand()) + 1_000
-            B = SSHBinner(N)
-            append!(B, dual_points(B))
-            @test all(B.bins .== 1)
+        for method in [
+            SphereSurfaceHistogram.partition_sphere1,
+            SphereSurfaceHistogram.partition_sphere2
+        ]
+            for _ in 1:10
+                N = floor(Int64, 1_000_000rand()) + 1_000
+                B = SSHBinner(N, method=method)
+
+                # dual_points (should) return center positions of bins in order
+                # check if each point maps to the correct bin
+                bin_centers = dual_points(B)
+                center_matched_bin = Bool[]
+                for (i, v) in enumerate(bin_centers)
+                    push!(B, v)
+                    push!(center_matched_bin, B.bins[i] == 1)
+                end
+                @test all(center_matched_bin)
+            end
         end
     end
 end

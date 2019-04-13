@@ -80,96 +80,29 @@ corresponding to the vertices of this mesh (in order). This can be plotted with
 `Makie` using `Makie.mesh(to_dual_mesh(B), color = colors)`.
 """
 function to_dual_mesh(B::SSHBinner)
-    vertices = Point3f0[]
+    phis = [
+        #   lvl-jump     lvl-step
+        2pi * (i-1 + (j-0.5)/B.phi_divisions[i])
+        for i in eachindex(B.phi_divisions)
+            for j in 1:B.phi_divisions[i]
+    ]
+    phis[1] += 0.5pi # increasing the initial angle fixes overlapping triangles
+    phis[end] += 0.5pi
+
+    # 2N - 4
     faces = Face{3, Int}[]
-
-    # thetas[1]:thetas[2] are 1 area = phi_divs[1]          center @ 0, 0, 1
-    # thetas[2]:thetas[3] are N areas = phi_divs[2]
-    # thetas[l-2]:thetas[l-1] are N' areas = phi_divs[l-2]
-    # thetas[l-1]:thetas[l] are 1 area = phi_divs[l-1]      center @ 0, 0, -1
-
-
-    # This is the center between thetas[1] and thetas[2]!
-    # The representation becomes weird though....
-    push!(vertices, Point3f0(0, 0, 1))
-
-    # connecting 1 to N doesn't work with the method used for N to M
-    # same with N to 1, see below
-    theta = 0.5(B.thetas[2] + B.thetas[3])
-    N = B.phi_divisions[2]
-    for k in 0:N-1
-        phi = 2pi * (k + 0.5) / N
-        push!(vertices, to_cartesian(theta, phi))
-        push!(faces, Face(1, k+2, ((k+1)%N)+2))
-    end
-
-    for i in 3:length(B.thetas)-2
-        theta = 0.5(B.thetas[i] + B.thetas[i+1])
-        N = B.phi_divisions[i]
-
-        for k in 0:N-1
-            phi = 2pi * (k + 0.5) / N
-            push!(vertices, to_cartesian(theta, phi))
-
-            l = length(vertices)
-            l < 3 && continue
-            # I should probably find a better name that M and N
-            M = B.phi_divisions[i-1]
-
-            if M == N
-                push!(faces, Face(l-1, l, l-N))
-                push!(faces, Face(l, l-N+1, l-N))
-
-            elseif M < N
-                # offset to top layer
-                # if factor = 2: increment inner_index every 2nd step
-                # if factor = 4: increment inner_index every 4th step
-                factor = div(N, M)
-                # equivalent to l - phi_divs - div(factor-1 + k*(factor-1), factor)
-                inner_index = l - M - div((k+1)*(factor-1), factor)
-                # println("l = $l   \t  inner_index = $inner_index")
-                if N-1 > k > 0
-                    if k % 2 == 1
-                        push!(faces, Face(l-1, l, inner_index))
-                        push!(faces, Face(l, inner_index+1, inner_index))
-                    else
-                        push!(faces, Face(l-1, l, inner_index))
-                    end
-                elseif k == 0
-                    last_index = l + N - 1
-                    push!(faces, Face(last_index-1, last_index, l-1))
-                    push!(faces, Face(last_index, inner_index, l-1))
-                    push!(faces, Face(last_index, l, inner_index))
-                end
-
-            elseif M > N
-                offset = M - k
-                if k > 0
-                    push!(faces, Face(l-1, l, l-offset-1))
-                    push!(faces, Face(l, l-offset, l-offset-1))
-                    push!(faces, Face(l, l-offset+1, l-offset))
-                else
-                    push!(faces, Face(l-1, l, l-offset))
-                    push!(faces, Face(l, l-offset, l-offset+1))
-                    push!(faces, Face(l, l-1, l+N-1))
-                end
-
-            end
+    j = 1
+    N = length(phis)
+    for i in 3:N
+        push!(faces, Face{3, Int}(j, i-1, i))
+        while phis[i] > phis[j] + 2pi
+            push!(faces, Face{3, Int}(j, i, j+1))
+            j += 1
         end
     end
+    push!(faces, Face{3, Int}(N-2, N-1, N))
 
-    # Last layer in loop:
-    # thetas[l-2]:thetas[l-1] are N' areas = phi_divs[l-2]  <- this one
-    # thetas[l-1]:thetas[l] are 1 area = phi_divs[l-1]      center @ 0, 0, -1
-    # so add the last Point and connect it
-    push!(vertices, Point3f0(0, 0, -1))
-    l = length(vertices)
-    N = B.phi_divisions[end-1]
-    for k in 0:N-1
-        push!(faces, Face(l, l-k-1, l - ((k+1) % N) - 1))
-    end
-
-    GLNormalMesh(vertices = vertices, faces = faces)
+    GLNormalMesh(vertices = dual_points(B), faces = faces)
 end
 
 
