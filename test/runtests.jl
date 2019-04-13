@@ -49,11 +49,16 @@ end
     end
 
     @testset "Flat Histogram" begin
-        for _ in 1:10
-            N = floor(Int64, 1_000_000rand()) + 1_000
-            B = SSHBinner(N)
-            append!(B, dual_points(B))
-            @test all(B.bins .== 1)
+        for method in [
+            SphereSurfaceHistogram.partition_sphere1,
+            SphereSurfaceHistogram.partition_sphere2
+        ]
+            for _ in 1:10
+                N = floor(Int64, 1_000_000rand()) + 1_000
+                B = SSHBinner(N, method=method)
+                append!(B, dual_points(B))
+                @test all(B.bins .== 1)
+            end
         end
     end
 end
