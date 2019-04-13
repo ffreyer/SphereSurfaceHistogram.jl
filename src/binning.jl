@@ -76,9 +76,9 @@ end
 
 Generate a Sphere Surface Histogram Binner with approximately N_bins.
 """
-SSHBinner(N_bins::Real) = SSHBinner(round(Int64, N_bins))
-function SSHBinner(N_bins::Int64)
-    thetas, phi_divisions = partition_sphere_optim2(4pi/N_bins)
+SSHBinner(N_bins::Real; kwargs...) = SSHBinner(round(Int64, N_bins); kwargs...)
+function SSHBinner(N_bins::Int64; method=partition_sphere2)
+    thetas, phi_divisions = partition_sphere_optim(4pi/N_bins, method=method)
     SSHBinner(thetas, phi_divisions)
 end
 
@@ -160,20 +160,92 @@ end
 
 
 """
-    partition_sphere_optim2(dA[max_iter = 10])
+    partition_sphere1(dA[, factor=sqrt(pi)])
+
+Partitions a sphere into bins, where each bin except the ones around z≈0 has
+equal area dA. The number of divisions in ϕ (0..2π) is not restricted (integers)
+and the divisions of θ vary to keep dA constant.
+"""
+function partition_sphere1(dA, factor=sqrt(pi))
+    next_theta(dA, theta1, dphi) = acos(clamp(cos(theta1) - dA / dphi, -1.0, 1.0))
+
+    # First area
+    # This will now be our goal theta-width
+    dtheta_goal = next_theta(dA, 0.0, 2pi)
+
+    # Devide 2pi by phi_div, such that phi = 2pi/n with n integer
+    phi_divs = Int64[1]
+    thetas = Float64[0.0, dtheta_goal]
+
+    # Currently radius of circle, should be sidelength of square
+    # pi r^2 = x^2 => sqrt(pi)r = x
+    dtheta_goal *= factor
+
+    while true
+        phi_div = last(phi_divs)
+        theta1 = last(thetas)
+
+        # Find best dtheta
+        dtheta = next_theta(dA, theta1, 2pi / phi_div) - theta1
+        best_dtheta = dtheta
+        while true
+            phi_div += 1
+            dtheta = next_theta(dA, theta1, 2pi / phi_div) - theta1
+            if abs(dtheta - dtheta_goal) < abs(best_dtheta - dtheta_goal)
+                # New dtheta better? Keep it and keep trying
+                best_dtheta = dtheta
+            else
+                # new dtheta worse? undo last phi_div increment and stop
+                phi_div -= 1
+                break
+            end
+        end
+
+        if (theta1 + best_dtheta / 2.0) > pi/2
+            break
+        else
+            push!(thetas, theta1 + best_dtheta)
+            push!(phi_divs, phi_div)
+        end
+    end
+
+    dtheta = thetas[end] - thetas[end-1]
+    theta_fourth = thetas[end-1] + 3dtheta/4
+    if theta_fourth > pi/2
+        # center should be flush
+        thetas[end] = pi - thetas[end-1]
+        for i in length(thetas)-2:-1:1
+            push!(thetas, pi - thetas[i])
+            push!(phi_divs, phi_divs[i])
+        end
+    else
+        # last(thetas) should be flush
+        thetas[end] = pi/2
+        for i in length(thetas)-1:-1:1
+            push!(thetas, pi - thetas[i])
+            push!(phi_divs, phi_divs[i])
+        end
+    end
+
+    return thetas, phi_divs
+end
+
+
+"""
+    partition_sphere_optim2(dA[; max_iter = 10, method = partition_sphere2])
 
 Optimizes the sphere partitioning by modifying dA (the number of bins). After a
 few iterations, dA becomes consistent for all bins.
 """
-function partition_sphere_optim2(dA, max_iter = 10)
+function partition_sphere_optim(dA; max_iter = 10, method=partition_sphere2)
     # NOTE this converges really fast
-    # area(ϕ1, ϕ2, θ1, θ2) = (ϕ2 - ϕ1) * (cos(θ1) - cos(θ2))
+
     new_dA = dA
     N = round(Int64, 4pi/dA)
     _iterations = 0
     for i in 1:max_iter
         _iterations = i
-        thetas, phi_divs = partition_sphere2(new_dA)
+        thetas, phi_divs = method(new_dA)
         next_N = sum(phi_divs)
         if N == next_N
             break
@@ -183,22 +255,7 @@ function partition_sphere_optim2(dA, max_iter = 10)
         end
     end
 
-    thetas, phi_divs = partition_sphere2(new_dA)
-
-    # Some stats
-    # dAs = map(enumerate(dphis)) do t
-    #     i, dphi = t
-    #     dphi * (cos(thetas[i]) - cos(thetas[i+1]))
-    # end
-    # dA_mean = round(mean(dAs), sigdigits = 3)
-    # dA_std = round(std(dAs), sigdigits = 3)
-    # dA_perc = round(100dA_std/dA_mean, sigdigits = 3)
-    # @info(
-    #     "Optimized dA = $dA_mean ± $dA_std  ($(dA_perc)% @ " *
-    #     "$(sum(phi_divs)) bins after $_iterations Iterations)"
-    # )
-
-    thetas, phi_divs
+    method(new_dA)
 end
 
 
