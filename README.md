@@ -22,6 +22,7 @@ include(SphereSurfaceHistogram.PATHS[:point_gen])
 values = random_unit_vector(1000)
 
 
+
 # Binning
 
 # Create a Binner with approximately 1000 bins. The number of bins is optimized
@@ -39,6 +40,16 @@ B[:, pi/2]            # phi-ring closest to z = 0
 B[pi/2, :]            # theta-ring closest to x = 0, y = 1
 B[:, :]               # all bins, indexed as [theta_index][phi_index]
 B[0:pi/2:2pi, pi/2]   # bins closest to (cos(phi), sin(phi), 0) for phi = 0:pi/2:2pi
+
+
+# Additionally SSHBinner can be supplied with a `method`. There are two options,
+# `partition_sphere1` and `partition_sphere2`. Both partition the sphere in theta
+# first, creating some number of rings with phi = 0..2pi. The former then creates
+# any number bins for each ring, the latter is restricted to some power of two,
+# which means that bins a re more frequently aligned.
+# `partition_sphere2` is the default.
+B = SSHBinner(N_bins, method=partition_sphere1)
+
 
 
 # Plotting
