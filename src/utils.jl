@@ -49,7 +49,7 @@ function Base.getindex(B::SSHBinner, phi::Real, theta::Real)
     ))
 
     # this is probably slow because the lambda function includes theta
-    theta_index = findfirst(lower_bound -> theta <= lower_bound, B.thetas)
+    theta_index = findfirst(lower_bound -> theta + 1e-10 <= lower_bound, B.thetas)
     theta_index == nothing && (theta_index = length(B.thetas))
     theta_index == 1 || (theta_index -= 1)
 
@@ -65,7 +65,7 @@ function Base.getindex(B::SSHBinner, ::Colon, theta::Real)
     ))
 
     # this is probably slow because the lambda function includes theta
-    theta_index = findfirst(lower_bound -> theta <= lower_bound, B.thetas)
+    theta_index = findfirst(lower_bound -> theta + 1e-10 <= lower_bound, B.thetas)
     theta_index == nothing && (theta_index = length(B.thetas))
     theta_index == 1 || (theta_index -= 1)
 

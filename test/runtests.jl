@@ -71,4 +71,17 @@ end
             end
         end
     end
+
+    @testset "Indexing" begin
+        B = SSHBinner(10_000)
+        append!(B, [[cos(pi), sin(pi), 0.0] for _ in 1:1000])
+
+        # true position is 4969
+        @test B.bins[4969] == 1000
+
+        # indexing
+        @test B[pi, pi/2] == 1000
+        @test sum(B[:, pi/2]) == 1000
+        @test sum(B[pi, :]) == 1000
+    end
 end
