@@ -12,10 +12,10 @@ struct SSHBinner
 end
 
 
-
 ################################################################################
 ### SSHBinner utilities (things from Base and more)
 ################################################################################
+
 
 function Base.show(io::IO, B::SSHBinner)
     print(io, "SSHBinner with $(length(B.bins)) bins")
@@ -264,7 +264,6 @@ end
 ################################################################################
 
 
-
 @fastmath @inline function fast_theta_index_approximation(x, l::Float64)
     # trunc faster than floor
     # Brackets cause llvm code to be `fmul` rather than `afoldl`, much
@@ -289,9 +288,6 @@ end
 # Tested for 10, 1000, 10_000_000 bins, each with 1_000_000 random spins pushed
 @inline function fast_theta_index_search(B::SSHBinner, value)
     index = fast_theta_index_approximation(value, B.N_thetas)
-    # @info index
-    # if B.zs[index] < value <= B.zs[index+1]
-    # return index
     if value > B.zs[index]
         while true
             index -= 1
@@ -314,22 +310,7 @@ end
 Bins a single value (three dimensional unit vector).
 """
 function Base.push!(B::SSHBinner, value)
-    # theta_index = 0
-    # for i in 1:length(B.zs)-1
-    #     if value[3] >= B.zs[i+1]
-    #         theta_index = i
-    #         break
-    #     end
-    # end
     theta_index = fast_theta_index_search(B, value[3])
-
-    # @info "Hi"
-
-    # if theta_index != fast_theta_index_search(B, value[3])
-    #     x = fast_theta_index_search(B, value[3])
-    #     @warn "$theta_index != $x"
-    # end
-
     phi_index = if B.phi_divisions[theta_index] == 1
         1
     else
