@@ -1,6 +1,7 @@
 module SphereSurfaceHistogram
 
 include("binning.jl")
+include("utils.jl")
 export SSHBinner
 export partition_sphere1, partition_sphere2
 export push!, append!, unsafe_append!
