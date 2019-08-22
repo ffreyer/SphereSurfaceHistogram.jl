@@ -1,4 +1,3 @@
-using StaticArrays
 
 """
     random_unit_vector(N)

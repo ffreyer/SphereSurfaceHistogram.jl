@@ -1,12 +1,27 @@
 """
-    to_rects(B::SSHBinner, extrude=0)
+    to_cartesian(theta, phi)
 
-Generates a mesh where each face represents a bin.
+Calculates the cartesian vector (x, y, z) for a given pair of angles (polar/z
+angle theta, azimut/xy angle phi).
+"""
+function to_cartesian(theta, phi)
+    Vec3f0(
+        sin(theta) * cos(phi),
+        sin(theta) * sin(phi),
+        cos(theta)
+    )
+end
+
+
+"""
+    face_mesh(B::SSHBinner, extrude=0)
+
+Generates a tiled/disconnected mesh where each face represents a bin.
 
 `extrude` allows faces to be moved outwards (≈ (1 + extrude)eᵣ). For
-`extrude > 0` the faces will sperate, makign their shape easier to see.
+`extrude > 0` the faces will sperate, making their shape easier to see.
 """
-function to_rects(B::SSHBinner, extrude=0)
+function face_mesh(B::SSHBinner, extrude=0)
     vertices = Point3f0[]
     faces = Face{3, Int}[]
 
@@ -70,16 +85,18 @@ end
 
 
 """
-    to_dual_mesh(B::SSHBinner)
+    vertex_mesh(B::SSHBinner)
 
 Generates a mesh where each vertex represents (the center of) a bin.
 
 This type of mesh makes it easy to visualize the histogram with colors. Mapping
 each bin-filling to a color (e.g. using `to_hue(B)`) gives colors
 corresponding to the vertices of this mesh (in order). This can be plotted with
-`Makie` using `Makie.mesh(to_dual_mesh(B), color = colors)`.
+`Makie` using `Makie.mesh(vertexl_mesh(B), color = colors)`.
+
+See also: [`bin_positions`](@ref), [`face_mesh`](@ref)
 """
-function to_dual_mesh(B::SSHBinner)
+function vertex_mesh(B::SSHBinner)
     phis = [
         #   lvl-jump     lvl-step
         2pi * (i-1 + (j-0.5)/B.phi_divisions[i])
@@ -107,12 +124,14 @@ end
 
 
 """
-    dual_points(B::SSHBinner)
+    bin_positions(B::SSHBinner)
 
-Generates the same points (vertices) as `to_dual_mesh(B)`, but doesn't generate
-the full mesh.
+Returns a list of points corresponding to the center positions of each bin.
+This list is equivalent to the vertices used in `vertex_mesh(B)`.
+
+See also: [`vertex_mesh`](@ref)
 """
-function dual_points(B::SSHBinner)
+function bin_positions(B::SSHBinner)
     points = Point3f0[Point3f0(0, 0, 1)]
 
     for i in 2:length(B.thetas)-2
@@ -135,6 +154,8 @@ end
 
 Generates linesegments marking each bin area. This version is minimal in the
 sense that doesn't interpolate any points.
+
+See also: [`line_segments`](@ref)
 """
 function line_segments_minimal(B::SSHBinner)
     lines = Point3f0[]
@@ -183,6 +204,8 @@ to generate smooth arcs.
 
 Specifically, points are added to an arc, such that it would include at least
 `N_fragments` points over an angle 0:pi.
+
+See also: [`line_segments_minimal`](@ref)
 """
 function line_segments(B::SSHBinner; N_fragments=32)
     lines = Point3f0[]

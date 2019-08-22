@@ -1,19 +1,4 @@
 """
-    to_cartesian(theta, phi)
-
-Calculates the cartesian vector (x, y, z) for a given pair of angles (polar/z
-angle theta, azimut/xy angle phi).
-"""
-function to_cartesian(theta, phi)
-    Vec3f0(
-        sin(theta) * cos(phi),
-        sin(theta) * sin(phi),
-        cos(theta)
-    )
-end
-
-
-"""
     to_hue(B::SSHBinner[, s=1.0, v=1.0, a=1.0])
 
 Maps each bin filling to a hue relative to the maximum bin filling.

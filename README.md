@@ -3,7 +3,7 @@
 This package does histogram binning on a unit sphere. It can also generate
 a mesh where each vertex relates to a bin.
 
-Binning a single value takes on the order of `30ns`. 
+Binning a single value takes on the order of `30ns`.
 
 ---
 
@@ -16,11 +16,10 @@ Example plot with `1938` bins and `10 000` random unit vectors pushed. The left 
 ```julia
 using SphereSurfaceHistogram
 
-# random unit vectors are included seperately, so they aren't loaded if they
-# arent needed. StaticArrays need to be installed for this.
-include(SphereSurfaceHistogram.PATHS[:point_gen])
+# random_unit_vector() is an utility function that is only loaded when
+# StaticArrays is loaded. We'll use it to gnerate some sample data
+using StaticArrays
 values = random_unit_vector(1000)
-
 
 
 # Binning
@@ -49,14 +48,21 @@ B[0:pi/2:2pi, pi/2]   # bins closest to (cos(phi), sin(phi), 0) for phi = 0:pi/2
 # which means that bins a re more frequently aligned.
 # `partition_sphere2` is the default.
 B = SSHBinner(N_bins, method=partition_sphere1)
+```
 
+---
 
+Additionally, this package includes some plotting utilities. Just like `random_unit_vector`, they are only loaded when the appropriate packages are
+loaded. Continueing the example above:
 
-# Plotting
+```julia
+# Mesh, point and line generation becomes available with
+using GeometryTypes
+# Some coloring methods become available with
+using Colors
+# Plotting becomes available with (but requiring the above)
+using Makie
 
-# The mesh generation is sperated as well. With Makie, GeometryTypes and Colors
-# is installed you can use
-include(SphereSurfaceHistogram.PATHS[:Makie])
 
 # generate a mesh where vertices correspond to bins and plot it using Makie
 # the color (hue) corresponds to the relative bin filling
@@ -67,13 +73,37 @@ histogram(binner)
 # note that the bins follow the curvature of the sphere, so this visualization
 # is not exact.
 plot_debug(binner)
+```
 
-# Just the bin -> vertex mesh
-bin_vertex_mesh = to_dual_mesh(binner)
+---
 
-# just the bin -> area mesh
-bin_area_mesh = to_rects(binner)
+Some other exportet functions (from plotting utilities) include:
 
-# Color mapping
+```julia
+# Generate a mesh where each vertex corresponds to the center of a bin
+bin_vertex_mesh = vertex_mesh(binner)
+
+# Generate a disconnected mesh where each face corresponds to a bin
+bin_area_mesh = face_mesh(binner)
+
+# smoothed line segments, outlining each bin
+_lines = line_segments(binner)
+# unsmoothed version
+_lines = line_segments_minimal(binner)
+
+# positions of each bin center
+points = bin_positions(binner)
+
+
+# Color mapping functions
+# hue/alpha proportional to bin filling:
+# 0..max_bin_filling ~ 0..288 hue
 colors = to_hue(binner)
+# min_bin_filling..max_bin_filling ~ 0..288 hue
+colors = to_hue2(binner)
+# min_bin_filling..max_bin_filling ~ 0..288 hue
+# min_bin_filling..0.625*max_bin_filling ~ 0..1 alpha
+colors = to_alpha_hue(binner)
+# 0..max_bin_filling ~ 0..1 alpha
+colors = to_alpha(binner)
 ```
