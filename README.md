@@ -22,7 +22,6 @@ using StaticArrays
 values = random_unit_vector(1000)
 
 
-# Binning
 
 # Create a Binner with approximately 1000 bins. The number of bins is optimized
 # so that each bin has (approximately) the same size
@@ -33,12 +32,12 @@ binner = SSHBinner(N_bins)
 push!(binner, values[1])    # one 3-component vector
 append!(binner, values)     # many 3-component vectors
 
-# Bins can be accessed via indexing B[phi, theta]
-B[pi, pi/2]           # bin closest to (-1, 0, 0)
-B[:, pi/2]            # phi-ring closest to z = 0
-B[pi/2, :]            # theta-ring closest to x = 0, y = 1
+# Bins can be accessed via indexing B[theta, phi]
+B[pi/2, pi]           # bin closest to (-1, 0, 0)
+B[pi/2, :]            # phi-ring closest to z = 0
+B[:, pi/2]            # theta-ring closest to x = 0, y = 1
 B[:, :]               # all bins, indexed as [theta_index][phi_index]
-B[0:pi/2:2pi, pi/2]   # bins closest to (cos(phi), sin(phi), 0) for phi = 0:pi/2:2pi
+B[pi/2, 0:pi/2:2pi]   # bins closest to (cos(phi), sin(phi), 0) for phi = 0:pi/2:2pi
 
 
 # Additionally SSHBinner can be supplied with a `method`. There are two options,

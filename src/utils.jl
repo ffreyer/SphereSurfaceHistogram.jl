@@ -40,7 +40,7 @@ Base.minimum(B::SSHBinner) = minimum(B.bins)
 Returns the height of the bin which includes angles phi ∈ (0, 2pi) and theta ∈
 (0, pi).
 """
-function Base.getindex(B::SSHBinner, phi::Real, theta::Real)
+function Base.getindex(B::SSHBinner, theta::Real, phi::Real)
     0.0 <= phi <= 2pi || throw(ArgumentError(
         "Angle ϕ must be 0.0 ≤ ϕ = $phi ≤ π"
     ))
@@ -59,7 +59,7 @@ function Base.getindex(B::SSHBinner, phi::Real, theta::Real)
 end
 
 # Colon phi
-function Base.getindex(B::SSHBinner, ::Colon, theta::Real)
+function Base.getindex(B::SSHBinner, theta::Real, ::Colon)
     0.0 <= theta <= pi || throw(ArgumentError(
         "Angle θ must be 0.0 ≤ θ = $theta ≤ π"
     ))
@@ -74,7 +74,7 @@ function Base.getindex(B::SSHBinner, ::Colon, theta::Real)
 end
 
 # colon theta
-function Base.getindex(B::SSHBinner, phi::Real, ::Colon)
+function Base.getindex(B::SSHBinner, ::Colon, phi::Real)
     0.0 <= phi <= 2pi || throw(ArgumentError(
         "Angle ϕ must be 0.0 ≤ ϕ = $phi ≤ π"
     ))
@@ -92,19 +92,19 @@ end
 
 
 # Array / Range + Colon/ Number
-function Base.getindex(B::SSHBinner, phis::AbstractArray, ::Colon)
+function Base.getindex(B::SSHBinner, ::Colon, phis::AbstractArray)
     [getindex(B, phi, :) for phi in phis]
 end
-function Base.getindex(B::SSHBinner, ::Colon, thetas::AbstractArray)
+function Base.getindex(B::SSHBinner, thetas::AbstractArray, ::Colon)
     [getindex(B, :, theta) for theta in thetas]
 end
-function Base.getindex(B::SSHBinner, phis::AbstractArray, theta::Real)
+function Base.getindex(B::SSHBinner, theta::Real, phis::AbstractArray)
     [getindex(B, phi, theta) for phi in phis]
 end
-function Base.getindex(B::SSHBinner, phis::Real, theta::AbstractArray)
+function Base.getindex(B::SSHBinner, theta::AbstractArray, phis::Real)
     [getindex(B, phi, theta) for theta in thetas]
 end
-function Base.getindex(B::SSHBinner, phis::AbstractArray, thetas::AbstractArray)
+function Base.getindex(B::SSHBinner, thetas::AbstractArray, phis::AbstractArray)
     [[getindex(B, phi, theta) for phi in phis] for theta in thetas]
 end
 function Base.getindex(B::SSHBinner, ::Colon, ::Colon)
