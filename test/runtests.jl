@@ -80,8 +80,8 @@ end
         @test B.bins[4969] == 1000
 
         # indexing
-        @test B[pi, pi/2] == 1000
-        @test sum(B[:, pi/2]) == 1000
-        @test sum(B[pi, :]) == 1000
+        @test B[pi/2, pi] == 1000
+        @test sum(B[pi/2, :]) == 1000
+        @test sum(B[:, pi]) == 1000
     end
 end
