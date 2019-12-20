@@ -51,6 +51,25 @@ function SSHBinner(N_bins::Int64; method=partition_sphere2)
     SSHBinner(thetas, phi_divisions)
 end
 
+"""
+    SSHBinner(bins)
+
+Generate a Sphere Surface Histogram Binner with approximately N_bins.
+"""
+function SSHBinner(bins::Vector; method=partition_sphere2)
+    N_bins = length(bins)
+    thetas, phi_divisions = method(4pi/N_bins)
+
+    PI_PLUS = 2.0pi + 1e-14
+    phi_N_over_2pi = phi_divisions ./ PI_PLUS
+    zs = cos.(thetas)
+    zs[end] -= 1e-14
+    _cumsum = cumsum(phi_divisions)
+    N_thetas = Float64(length(thetas)-1)
+
+    SSHBinner(thetas, phi_divisions, zs, phi_N_over_2pi, _cumsum, N_thetas, bins)
+end
+
 
 """
     partition_sphere2(dA[, factor=sqrt(pi)])
