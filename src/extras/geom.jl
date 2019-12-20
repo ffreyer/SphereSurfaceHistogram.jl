@@ -119,7 +119,7 @@ function vertex_mesh(B::SSHBinner)
     end
     push!(faces, Face{3, Int}(N-2, N-1, N))
 
-    GLNormalMesh(vertices = dual_points(B), faces = faces)
+    GLNormalMesh(vertices = bin_positions(B), faces = faces)
 end
 
 
