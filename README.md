@@ -55,23 +55,13 @@ Additionally, this package includes some plotting utilities. Just like `random_u
 loaded. Continueing the example above:
 
 ```julia
-# Mesh, point and line generation becomes available with
-using GeometryTypes
-# Some coloring methods become available with
-using Colors
-# Plotting becomes available with (but requiring the above)
 using Makie
 
 
-# generate a mesh where vertices correspond to bins and plot it using Makie
-# the color (hue) corresponds to the relative bin filling
-histogram(binner)
-
-# show the above with rectangles approximating bin areas and points marking
-# the bin centers.
-# note that the bins follow the curvature of the sphere, so this visualization
-# is not exact.
-plot_debug(binner)
+# Plot a histogram
+# For this a mesh is generated where each vertex corresponds to one bin. The
+# vertices are then colored based on the correspondign bin value.
+histogram(binner, colormap=:matter, :colorscale=:relative, outline=:false)
 ```
 
 ---
@@ -92,17 +82,4 @@ _lines = line_segments_minimal(binner)
 
 # positions of each bin center
 points = bin_positions(binner)
-
-
-# Color mapping functions
-# hue/alpha proportional to bin filling:
-# 0..max_bin_filling ~ 0..288 hue
-colors = to_hue(binner)
-# min_bin_filling..max_bin_filling ~ 0..288 hue
-colors = to_hue2(binner)
-# min_bin_filling..max_bin_filling ~ 0..288 hue
-# min_bin_filling..0.625*max_bin_filling ~ 0..1 alpha
-colors = to_alpha_hue(binner)
-# 0..max_bin_filling ~ 0..1 alpha
-colors = to_alpha(binner)
 ```

@@ -28,11 +28,11 @@ function __init__()
         export bin_positions
         export line_segments_minimal, line_segments
     end
-    @require Colors="5ae59095-9a9b-59fe-a467-6f913c188581" begin
-        using .Colors
-        include("extras/color_utils.jl")
-        export to_hue, to_hue2, to_alpha, to_alpha_hue
-    end
+    # @require Colors="5ae59095-9a9b-59fe-a467-6f913c188581" begin
+    #     using .Colors
+    #     include("extras/color_utils.jl")
+    #     export to_hue, to_hue2, to_alpha, to_alpha_hue
+    # end
     @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
         using .Makie
         include("extras/Makie.jl")
