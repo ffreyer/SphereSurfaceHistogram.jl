@@ -40,7 +40,7 @@ getindex(::SSHBinner, ::Real, ::Real)
 
 SphereSurfaceHistogram includes a couple of Makie recipes. Most notably is the `histogram` recipe. It creates a mesh where each vertex represents a bin. Colors are then picked based on the counts in each bin.
 
-![Example Plot](docs/assets/main_example.png)
+![Example Plot](../assets/main_example.png)
 
 The image above uses the following code
 
