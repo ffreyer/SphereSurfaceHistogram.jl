@@ -33,7 +33,6 @@ Plots a histogram for the given SSHBinner.
 colormap.
 - `transparency = false`: Set this to true if your colormap is tranparent
 - `linecolor = :black`: Color of outline.
-
 """
 @recipe(Histogram, B) do scene
     Theme(
