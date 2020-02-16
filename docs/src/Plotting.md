@@ -9,7 +9,7 @@ scatter!(binner)
 
 This method scatters points that match the position of each bin. It can take all the typical `Makie.scatter`/`Makie.scatter!` arguments.
 
-![Example Plot](../assets/scatter.png)
+![Example Plot](assets/scatter.png)
 
 ---
 
@@ -25,7 +25,7 @@ bin_max = maximum(binner.bins)
 mesh(binner, color=map(b -> RGB(b/bin_max, 0.0, 0.0), binner.bins))
 ```
 
-![Example Plot](../assets/mesh.png)
+![Example Plot](assets/mesh.png)
 
 ---
 
@@ -36,7 +36,7 @@ linesegments!(binner)
 
 This method plots the boundaries of each bin. To avoid clipping/z-fighting, these lines are plotted at a slightly larger radius (1.001).
 
-![Example Plot](../assets/linesegments.png)
+![Example Plot](assets/linesegments.png)
 
 ---
 
@@ -57,7 +57,7 @@ This method is the main plotting function. It constructs a mesh just like `mesh`
 * `colorrange`: defines the bin values representing the first and last color of the `colormap`.
 * `transparency = false`: Much like standard Makie this enables transparency. Set this to `true` if your colormap is transparent.
 
-![Example Plot](../assets/histogram.png)
+![Example Plot](assets/histogram.png)
 
 All examples use `binner = SSHBinner(500)` with one million random vectors `normalize(2rand(3) .- 1.0)`.
 
