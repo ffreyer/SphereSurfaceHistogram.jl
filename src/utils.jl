@@ -35,7 +35,7 @@ Base.minimum(B::SSHBinner) = minimum(B.bins)
 
 
 """
-    getindex(B::SSHBinner, phi, theta)
+    getindex(B::SSHBinner, theta, phi)
 
 Returns the height of the bin which includes angles phi ∈ (0, 2pi) and theta ∈
 (0, pi).

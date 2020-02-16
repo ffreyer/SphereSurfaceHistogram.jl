@@ -54,7 +54,8 @@ end
 """
     SSHBinner(bins)
 
-Generate a Sphere Surface Histogram Binner with approximately N_bins.
+Generate a Sphere Surface Histogram Binner using the `bins` of another
+SSHBinner. This effectively creates a copy of the other source `SSHBinner`.
 """
 function SSHBinner(bins::Vector; method=partition_sphere2)
     N_bins = length(bins)
