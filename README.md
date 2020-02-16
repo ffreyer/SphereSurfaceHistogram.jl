@@ -1,5 +1,7 @@
 # SphereSurfaceHistogram
 
+![Documentation](https://github.com/ffreyer/SphereSurfaceHistogram.jl/workflows/Documentation/badge.svg)
+
 This package does histogram binning on a unit sphere. It can also generate
 a mesh where each vertex relates to a bin.
 
