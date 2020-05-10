@@ -1,4 +1,4 @@
-using SphereSurfaceHistogram, GeometryTypes
+using SphereSurfaceHistogram, GeometryBasics
 using Test
 
 @testset "SphereSurfaceHistogram.jl" begin
