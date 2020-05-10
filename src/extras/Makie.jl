@@ -5,7 +5,7 @@ function convert_arguments(P::Type{<:Scatter}, B::SSHBinner)
     convert_arguments(P, bin_positions(B))
 end
 # mesh with vertices @ bin centers (makes color mapping easy)
-function convert_arguments(P::Type{<:Mesh}, B::SSHBinner)
+function convert_arguments(P::Type{<:Makie.Mesh}, B::SSHBinner)
     convert_arguments(P, vertex_mesh(B))
 end
 # boundaries of bins (slightly enlarged to work with mesh)
@@ -41,7 +41,7 @@ colormap.
         transparency = false,
         linecolor = :black,
         colorscale = :absolute,
-        colorrange = [0, 1]
+        colorrange = (0, 1)
     )
 end
 
@@ -49,10 +49,10 @@ function map_bin_to_color(binner, colormap, colorscale, colorrange)
     map(binner, colormap, colorscale) do binner, cm, scale
         ex = extrema(binner.bins)
         if scale == :absolute
-            colorrange[] = [0, ex[2]]
+            colorrange[] = (0, ex[2])
         elseif scale == :static
         else
-            colorrange[] = [ex[1], ex[2]]
+            colorrange[] = (ex[1], ex[2])
         end
         map(binner.bins) do b
             Makie.RGBAf0(Makie.AbstractPlotting.interpolated_getindex(

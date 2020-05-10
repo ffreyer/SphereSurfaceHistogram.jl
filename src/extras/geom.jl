@@ -23,7 +23,7 @@ Generates a tiled/disconnected mesh where each face represents a bin.
 """
 function face_mesh(B::SSHBinner, extrude=0)
     vertices = Point3f0[]
-    faces = Face{3, Int}[]
+    faces = GLTriangleFace[]
 
     push!(vertices, Point3f0(0, 0, 1) + extrude * Point3f0(0,0,1))
     theta2 = B.thetas[2]
@@ -35,7 +35,7 @@ function face_mesh(B::SSHBinner, extrude=0)
         pos_2 = to_cartesian(theta2, phi2) + extrude * Point3f0(0,0,1)
         push!(vertices, pos_1)
         push!(vertices, pos_2)
-        push!(faces, Face(1, 2+2k, 3+2k))
+        push!(faces, GLTriangleFace(1, 2+2k, 3+2k))
     end
 
     for i in 2:length(B.phi_divisions)-1
@@ -60,8 +60,8 @@ function face_mesh(B::SSHBinner, extrude=0)
 
             l = length(vertices)
             append!(vertices, [pos_11, pos_12, pos_21, pos_22])
-            push!(faces, Face(l+1, l+3, l+2))
-            push!(faces, Face(l+2, l+3, l+4))
+            push!(faces, GLTriangleFace(l+1, l+3, l+2))
+            push!(faces, GLTriangleFace(l+2, l+3, l+4))
         end
     end
 
@@ -77,10 +77,11 @@ function face_mesh(B::SSHBinner, extrude=0)
         pos_2 = to_cartesian(theta2, phi2) + extrude * Point3f0(0,0,-1)
         push!(vertices, pos_1)
         push!(vertices, pos_2)
-        push!(faces, Face(l, l+2+2k, l+1+2k))
+        push!(faces, GLTriangleFace(l, l+2+2k, l+1+2k))
     end
 
-    GLNormalMesh(vertices = vertices, faces = faces)
+    # GeometryBasics.Mesh(GeometryBasics.meta(vertices; normals=ns), faces)
+    normal_mesh(vertices, faces)
 end
 
 
@@ -107,19 +108,20 @@ function vertex_mesh(B::SSHBinner)
     phis[end] += 0.5pi
 
     # 2N - 4
-    faces = Face{3, Int}[]
+    faces = GLTriangleFace[]
     j = 1
     N = length(phis)
     for i in 3:N
-        push!(faces, Face{3, Int}(j, i-1, i))
+        push!(faces, GLTriangleFace(j, i-1, i))
         while phis[i] > phis[j] + 2pi
-            push!(faces, Face{3, Int}(j, i, j+1))
+            push!(faces, GLTriangleFace(j, i, j+1))
             j += 1
         end
     end
-    push!(faces, Face{3, Int}(N-2, N-1, N))
+    push!(faces, GLTriangleFace(N-2, N-1, N))
 
-    GLNormalMesh(vertices = bin_positions(B), faces = faces)
+    # GeometryBasics.Mesh(GeometryBasics.meta(vertices; normals=ns), faces)
+    normal_mesh(bin_positions(B), faces)
 end
 
 

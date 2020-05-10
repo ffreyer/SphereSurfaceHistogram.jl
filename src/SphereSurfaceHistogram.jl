@@ -21,18 +21,13 @@ function __init__()
         include("extras/point_generator.jl")
         export random_unit_vector
     end
-    @require GeometryTypes="4d00f742-c7ba-57c2-abde-4428a4b178cb" begin
-        using .GeometryTypes
+    @require GeometryBasics="5c1252a2-5f33-56bf-86c9-59e7332b4326" begin
+        using .GeometryBasics
         include("extras/geom.jl")
         export face_mesh, vertex_mesh
         export bin_positions
         export line_segments_minimal, line_segments
     end
-    # @require Colors="5ae59095-9a9b-59fe-a467-6f913c188581" begin
-    #     using .Colors
-    #     include("extras/color_utils.jl")
-    #     export to_hue, to_hue2, to_alpha, to_alpha_hue
-    # end
     @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
         using .Makie
         include("extras/Makie.jl")
