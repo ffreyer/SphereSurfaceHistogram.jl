@@ -1,6 +1,10 @@
 # SphereSurfaceHistogram
 
-<a href="https://www.repostatus.org/#inactive"><img src="https://www.repostatus.org/badges/latest/inactive.svg" alt="Project Status: Inactive – The project has reached a stable, usable state but is no longer being actively developed; support/maintenance will be provided as time allows." /></a> [![](https://github.com/ffreyer/SphereSurfaceHistogram.jl/workflows/Documentation/badge.svg)](https://ffreyer.github.io/SphereSurfaceHistogram.jl/dev)
+<a href="https://www.repostatus.org/#inactive"><img src="https://www.repostatus.org/badges/latest/inactive.svg" alt="Project Status: Inactive – The project has reached a stable, usable state but is no longer being actively developed; support/maintenance will be provided as time allows." /></a>
+[![github-ci](https://github.com/ffreyer/SphereSurfaceHistogram.jl/workflows/Tests/badge.svg)](https://github.com/ffreyer/SphereSurfaceHistogram.jl/actions?query=workflow%3A%22Tests%22)
+[![codecov](https://codecov.io/gh/ffreyer/SphereSurfaceHistogram.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/ffreyer/SphereSurfaceHistogram.jl)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://ffreyer.github.io/SphereSurfaceHistogram.jl/dev)
+
 
 This package does histogram binning on a unit sphere, i.e. binning of unit vectors. It also provides some plotting utilities.
 
