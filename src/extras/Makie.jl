@@ -1,11 +1,11 @@
-import Makie.convert_arguments
+import AbstractPlotting.convert_arguments
 
 # bin centers
 function convert_arguments(P::Type{<:Scatter}, B::SSHBinner)
     convert_arguments(P, bin_positions(B))
 end
 # mesh with vertices @ bin centers (makes color mapping easy)
-function convert_arguments(P::Type{<:Makie.Mesh}, B::SSHBinner)
+function convert_arguments(P::Type{<:AbstractPlotting.Mesh}, B::SSHBinner)
     convert_arguments(P, vertex_mesh(B))
 end
 # boundaries of bins (slightly enlarged to work with mesh)
@@ -55,14 +55,14 @@ function map_bin_to_color(binner, colormap, colorscale, colorrange)
             colorrange[] = (ex[1], ex[2])
         end
         map(binner.bins) do b
-            Makie.RGBAf0(Makie.AbstractPlotting.interpolated_getindex(
+            AbstractPlotting.RGBAf0(AbstractPlotting.AbstractPlotting.interpolated_getindex(
                 to_colormap(cm), Float64(b), colorrange[]
             ))
         end
     end
 end
 
-function Makie.plot!(plot::Histogram)
+function AbstractPlotting.plot!(plot::Histogram)
     colors = map_bin_to_color(
         plot[:B], plot[:colormap], plot[:colorscale], plot[:colorrange]
     )
@@ -84,7 +84,7 @@ export histogram, histogram!
 # function histogram(B::SSHBinner, color_method=to_hue)
 #     _colors = color_method(B)
 #     is_transparent = any(c -> c.alpha < 1.0, _colors)
-#     Makie.mesh(vertex_mesh(B), color = _colors, transparency = is_transparent)
+#     AbstractPlotting.mesh(vertex_mesh(B), color = _colors, transparency = is_transparent)
 # end
 #
 #
@@ -97,9 +97,9 @@ export histogram, histogram!
 # function plot_debug(B::SSHBinner, color_method = to_hue)
     # _colors = color_method(B)
     # is_transparent = any(c -> c.alpha < 1.0, _colors)
-    # scene = Makie.mesh(vertex_mesh(B), color = _colors, transparency = is_transparent)
-    # Makie.linesegments!(scene, 1.001line_segments(B), color = :black)
-    # # Makie.mesh!(scene1, to_rects(B, extrude), color = RGBA(1, 1, 1, 0.2), transparency = true)
-    # Makie.scatter!(scene, 1.005bin_positions(B), color=:black, markersize=0.01)
+    # scene = AbstractPlotting.mesh(vertex_mesh(B), color = _colors, transparency = is_transparent)
+    # AbstractPlotting.linesegments!(scene, 1.001line_segments(B), color = :black)
+    # # AbstractPlotting.mesh!(scene1, to_rects(B, extrude), color = RGBA(1, 1, 1, 0.2), transparency = true)
+    # AbstractPlotting.scatter!(scene, 1.005bin_positions(B), color=:black, markersize=0.01)
     # scene
 # end
