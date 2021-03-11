@@ -1,6 +1,6 @@
 # Plotting with Makie
 
-SphereSurfaceHistogram makes use of `Requires.jl` to dynamically load plotting and mesh generation functionality when `Makie` is present. Using Makie recipes, the following plotting methods will be exposed:
+SphereSurfaceHistogram makes use of `Requires.jl` to dynamically load plotting and mesh generation functionality when `AbstractPlotting` is present. Using Makie recipes, the following plotting methods will be exposed:
 
 ```julia
 scatter(binner)
@@ -18,7 +18,7 @@ mesh(binner)
 mesh!(binner)
 ```
 
-This method creates a mesh where each vertex corresponds to a bin of the given `binner::SphereSurfaceHistogram`. One can easily color this mesh according to the bin counts by mapping each `binner.bins` to a color. For example:
+This method creates a mesh where each vertex corresponds to a bin of the given `binner::SphereSurfaceHistogram`. One can easily color this mesh according to the bin counts by mapping `binner.bins` to colors. For example:
 
 ```julia
 bin_max = maximum(binner.bins)

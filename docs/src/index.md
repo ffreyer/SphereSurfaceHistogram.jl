@@ -7,20 +7,18 @@
 
 ## Quickstart
 
-An empty histogram binner with approximately `N` bins can be created with
+An empty histogram binner with approximately `10_000` bins can be created with
 
 ```@repl
 using SphereSurfaceHistogram
-N = 10_000
-binner = SSHBinner(N)
+binner = SSHBinner(10_000)
 ```
 
 Adding vectors can be done using `push!` or `append!`
 
 ```@repl
 using SphereSurfaceHistogram
-N = 10_000
-binner = SSHBinner(N)
+binner = SSHBinner(10_000)
 push!(binner, [1.0, 0.0, 0.0])
 append!(binner, [[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
 ```
@@ -45,22 +43,23 @@ SphereSurfaceHistogram includes a couple of Makie recipes. Most notably is the `
 The image above uses the following code
 
 ```julia
-using SphereSurfaceHistogram, Makie
-binner1 = SSHBinner(N)
-binner2 = SSHBinner(N)
+using SphereSurfaceHistogram, GLMakie
+binner1 = SSHBinner(10_000)
+binner2 = SSHBinner(10_000)
 for _ in 1:1000
     append!(binner1, random_unit_vector(1_000))
 end
-for _ in 1:1000_000
+for _ in 1:1_000_000
     push!(binner2, normalize(2rand(3) .- 1.0))
 end
-scene1 = histogram(binner1)
-scene2 = histogram(binner2)
-vbox(scene1, scene2)
+fig = Figure()
+histogram(fig[1, 1], binner1)
+histogram(fig[1, 2], binner2)
+fig
 ```
 
 !!! info
-    Plotting methods are not loaded by default. SphereSurfaceHistogram makes use of `Requires.jl` to dynamically load plotting related methods when `Makie.jl` is used.
+    Plotting methods are not loaded by default. SphereSurfaceHistogram makes use of `Requires.jl` to dynamically load plotting related methods when `AbstractPlotting.jl` becomes available.
 
 !!! info
     Mesh generation methods can also be loaded individually. If you want to use the mesh generation methods without `Makie`, you should import `GeometryTypes.jl`.

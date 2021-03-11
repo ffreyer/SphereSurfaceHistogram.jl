@@ -12,7 +12,7 @@ Beyond this a binner can also be created from the bins of another binner. This i
 SSHBinner(::Vector)
 ```
 
-You can also pick between two algorithms for generating bins. This can be done using the `method` keyword argument in `SSHBinner` to pass either
+You can also pick between two algorithms for generating bins. This can be done by using the `method` keyword argument in `SSHBinner` to pass either
 
 ```@docs
 partition_sphere1

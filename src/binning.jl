@@ -73,13 +73,17 @@ end
 
 
 """
-    partition_sphere2(dA[, factor=sqrt(pi)])
+    partition_sphere2(dA)
 
-Partitions a sphere into bins, where each bin except the ones around z≈0 has
-equal area dA. The number of divisions in ϕ (0..2π) is restricted to powers of
-2 and the divisions of θ vary to keep dA constant.
+Partitions a sphere into bins of size `dA` where number of divisions in ϕ 
+(0..2π) is restricted to a power of 2.
+
+Note that for a random `dA` this will not produce equally sized bins. 
+(Specifically bins at z ≈ 0 will be wrong.) The algorithm relies on 
+`partition_sphere_optim` to optimize `dA` to a value fitting on the sphere 
+surface which happens during the creation of an `SSHBinner`.
 """
-function partition_sphere2(dA, factor=sqrt(pi))
+function partition_sphere2(dA)
     # Use symmetry - only 0..pi/2 needed (± some delta if center of dA @ pi/2)
 
     # Starting at some point theta1 with width dphi,
@@ -96,7 +100,7 @@ function partition_sphere2(dA, factor=sqrt(pi))
 
     # Currently radius of circle, should be sidelength of square
     # pi r^2 = x^2 => sqrt(pi)r = x
-    dtheta_goal *= factor
+    dtheta_goal *= sqrt(pi)
 
     while true
         phi_div = last(phi_divs)
@@ -149,13 +153,17 @@ end
 
 
 """
-    partition_sphere1(dA[, factor=sqrt(pi)])
+    partition_sphere1(dA)
 
-Partitions a sphere into bins, where each bin except the ones around z≈0 has
-equal area dA. The number of divisions in ϕ (0..2π) is not restricted (integers)
-and the divisions of θ vary to keep dA constant.
+Partitions a sphere into bins of size `dA` where number of divisions in ϕ 
+(0..2π) is not restricted, i.e. it can be any integer.
+    
+Note that for a random `dA` this will not produce equally sized bins. 
+(Specifically bins at z ≈ 0 will be wrong.) The algorithm relies on 
+`partition_sphere_optim` to optimize `dA` to a value fitting on the sphere 
+surface which happens during the creation of an `SSHBinner`.
 """
-function partition_sphere1(dA, factor=sqrt(pi))
+function partition_sphere1(dA,)
     next_theta(dA, theta1, dphi) = acos(clamp(cos(theta1) - dA / dphi, -1.0, 1.0))
 
     # First area
@@ -168,7 +176,7 @@ function partition_sphere1(dA, factor=sqrt(pi))
 
     # Currently radius of circle, should be sidelength of square
     # pi r^2 = x^2 => sqrt(pi)r = x
-    dtheta_goal *= factor
+    dtheta_goal *= sqrt(pi)
 
     while true
         phi_div = last(phi_divs)
@@ -221,10 +229,10 @@ end
 
 
 """
-    partition_sphere_optim2(dA[; max_iter = 10, method = partition_sphere2])
+    partition_sphere_optim(dA[; max_iter = 10, method = partition_sphere2])
 
-Optimizes the sphere partitioning by modifying dA (the number of bins). After a
-few iterations, dA becomes consistent for all bins.
+Optimizes the sphere partitioning by modifying dA (~ the number of bins). After
+a few iterations, dA becomes consistent for all bins.
 """
 function partition_sphere_optim(dA; max_iter = 10, method=partition_sphere2)
     # NOTE this converges really fast
