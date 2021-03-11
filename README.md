@@ -8,10 +8,10 @@
 
 This package does histogram binning on a unit sphere, i.e. binning of unit vectors. It also provides some plotting utilities.
 
-Binning a single vector takes on the order of `30ns`.
+Binning a single vector takes on the order of `25ns` for `10_000` bins and `35ns` for `1_000_000` bins locally.
 
 ---
 
 Here's an example plot. The left side shows a histogram of 1e6 random unit vectors, sampled correctly. The right side shows `normalize(2rand(3) .- 1.0)`, also one million samples. 
 
-![](https://github.com/ffreyer/SphereSurfaceHistogram.jl/blob/master/docs/src/assets/main_example.png)
+![example](https://user-images.githubusercontent.com/10947937/110827691-9f0bfb80-8296-11eb-9caa-b18742f41c8f.png)
