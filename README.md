@@ -8,7 +8,7 @@
 
 This package does histogram binning on a unit sphere, i.e. binning of unit vectors. It also provides some plotting utilities.
 
-Binning a single vector takes on the order of `25ns` for `10_000` bins and `35ns` for `1_000_000` bins locally.
+Binning a single vector takes on the order of `25ns` for `10_000` bins and `35ns` for `1_000_000` bins on my machine.
 
 ---
 
