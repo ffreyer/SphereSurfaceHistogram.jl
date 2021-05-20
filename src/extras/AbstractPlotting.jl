@@ -1,11 +1,11 @@
-import Makie: convert_arguments, plot!
+import AbstractPlotting.convert_arguments
 
 # bin centers
 function convert_arguments(P::Type{<:Scatter}, B::SSHBinner)
     convert_arguments(P, bin_positions(B))
 end
 # mesh with vertices @ bin centers (makes color mapping easy)
-function convert_arguments(P::Type{<:Makie.Mesh}, B::SSHBinner)
+function convert_arguments(P::Type{<:AbstractPlotting.Mesh}, B::SSHBinner)
     convert_arguments(P, vertex_mesh(B))
 end
 # boundaries of bins (slightly enlarged to work with mesh)
@@ -55,14 +55,14 @@ function map_bin_to_color(binner, colormap, colorscale, colorrange)
             colorrange[] = (ex[1], ex[2])
         end
         map(binner.bins) do b
-            RGBAf0(Makie.interpolated_getindex(
+            AbstractPlotting.RGBAf0(AbstractPlotting.AbstractPlotting.interpolated_getindex(
                 to_colormap(cm), Float64(b), colorrange[]
             ))
         end
     end
 end
 
-function plot!(plot::Histogram)
+function AbstractPlotting.plot!(plot::Histogram)
     colors = map_bin_to_color(
         plot[:B], plot[:colormap], plot[:colorscale], plot[:colorrange]
     )
@@ -72,6 +72,8 @@ function plot!(plot::Histogram)
 
     plot
 end
+
+export histogram, histogram!
 
 
 # """

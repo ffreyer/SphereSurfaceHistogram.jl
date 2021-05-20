@@ -30,8 +30,13 @@ function __init__()
     end
     @require AbstractPlotting="537997a7-5e4e-5d89-9595-2241ea00577e" begin
         using .AbstractPlotting
-        include("extras/Makie.jl")
+        include("extras/AbstractPlotting.jl")
         export histogram, plot_debug
+    end
+    @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
+        using .Makie
+        include("extras/Makie.jl")
+        export histogram, histogram!
     end
 end
 
