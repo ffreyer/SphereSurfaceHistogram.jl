@@ -98,27 +98,52 @@ corresponding to the vertices of this mesh (in order). This can be plotted with
 See also: [`bin_positions`](@ref), [`face_mesh`](@ref)
 """
 function vertex_mesh(B::SSHBinner)
-    phis = [
-        #   lvl-jump     lvl-step
-        2pi * (i-1 + (j-0.5)/B.phi_divisions[i])
-        for i in eachindex(B.phi_divisions)
-            for j in 1:B.phi_divisions[i]
-    ]
-    phis[1] += 0.5pi # increasing the initial angle fixes overlapping triangles
-    phis[end] += 0.5pi
-
-    # 2N - 4
     faces = GLTriangleFace[]
-    j = 1
-    N = length(phis)
-    for i in 3:N
-        push!(faces, GLTriangleFace(j, i-1, i))
-        while phis[i] > phis[j] + 2pi
-            push!(faces, GLTriangleFace(j, i, j+1))
-            j += 1
+
+    N = 0
+    for i in 2:length(B.phi_divisions)
+        top_idx = 1
+        bot_idx = 1
+        top = top_step = 1 / B.phi_divisions[i-1]
+        bot = bot_step = 1 / B.phi_divisions[i]
+        N2 = N + B.phi_divisions[i-1]
+
+        while (bot < 0.99999) || (top < 0.99999)
+            if top < bot
+                top += top_step
+                top_idx += 1
+                i1 = N + mod1(top_idx, B.phi_divisions[i-1])
+                i2 = N + top_idx - 1
+                i3 = N2 + bot_idx
+                push!(faces, GLTriangleFace(i1, i2, i3))
+            else
+                bot += bot_step
+                bot_idx += 1
+                i1 = N + top_idx
+                i2 = N2 + bot_idx - 1
+                i3 = N2 + mod1(bot_idx, B.phi_divisions[i])
+                push!(faces, GLTriangleFace(i1, i2, i3))
+            end
         end
+
+        if i < length(B.phi_divisions)
+            bot_idx += 1
+            i1 = N + top_idx
+            i2 = N2 + bot_idx - 1
+            i3 = N2 + mod1(bot_idx, B.phi_divisions[i])
+            push!(faces, GLTriangleFace(i1, i2, i3))
+        end
+
+        if i-1 > 1
+            top_idx += 1
+            i1 = N + mod1(top_idx, B.phi_divisions[i-1])
+            i2 = N + top_idx - 1
+            i3 = N2 + mod1(bot_idx, B.phi_divisions[i])
+            top_idx = mod1(top_idx + 1, B.phi_divisions[i-1])
+            push!(faces, GLTriangleFace(i1, i2, i3))
+        end
+        N = N2
     end
-    push!(faces, GLTriangleFace(N-2, N-1, N))
 
     # GeometryBasics.Mesh(GeometryBasics.meta(vertices; normals=ns), faces)
     normal_mesh(bin_positions(B), faces)
