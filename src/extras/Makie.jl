@@ -1,4 +1,4 @@
-import Makie: convert_arguments, plot!
+import .Makie: convert_arguments, plot!
 
 # bin centers
 function convert_arguments(P::Type{<:Scatter}, B::SSHBinner)
