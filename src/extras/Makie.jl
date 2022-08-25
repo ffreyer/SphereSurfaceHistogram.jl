@@ -55,7 +55,7 @@ function map_bin_to_color(binner, colormap, colorscale, colorrange)
             colorrange[] = (ex[1], ex[2])
         end
         map(binner.bins) do b
-            RGBAf0(Makie.interpolated_getindex(
+            RGBAf(Makie.interpolated_getindex(
                 to_colormap(cm), Float64(b), colorrange[]
             ))
         end

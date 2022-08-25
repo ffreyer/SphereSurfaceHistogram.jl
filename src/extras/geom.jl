@@ -22,17 +22,17 @@ Generates a tiled/disconnected mesh where each face represents a bin.
 `extrude > 0` the faces will sperate, making their shape easier to see.
 """
 function face_mesh(B::SSHBinner, extrude=0)
-    vertices = Point3f0[]
+    vertices = Point3f[]
     faces = GLTriangleFace[]
 
-    push!(vertices, Point3f0(0, 0, 1) + extrude * Point3f0(0,0,1))
+    push!(vertices, Point3f(0, 0, 1) + extrude * Point3f(0,0,1))
     theta2 = B.thetas[2]
     N = B.phi_divisions[2]
     for k in 0:N-1
         phi1 = 2pi * k/N
         phi2 = 2pi * (k+1) / N
-        pos_1 = to_cartesian(theta2, phi1) + extrude * Point3f0(0,0,1)
-        pos_2 = to_cartesian(theta2, phi2) + extrude * Point3f0(0,0,1)
+        pos_1 = to_cartesian(theta2, phi1) + extrude * Point3f(0,0,1)
+        pos_2 = to_cartesian(theta2, phi2) + extrude * Point3f(0,0,1)
         push!(vertices, pos_1)
         push!(vertices, pos_2)
         push!(faces, GLTriangleFace(1, 2+2k, 3+2k))
@@ -65,7 +65,7 @@ function face_mesh(B::SSHBinner, extrude=0)
         end
     end
 
-    push!(vertices, Point3f0(0, 0, -1) + extrude * Point3f0(0,0,-1))
+    push!(vertices, Point3f(0, 0, -1) + extrude * Point3f(0,0,-1))
     l = length(vertices)
     theta2 = B.thetas[end-1]
     N = B.phi_divisions[end-1]
@@ -73,8 +73,8 @@ function face_mesh(B::SSHBinner, extrude=0)
     for k in 0:N-1
         phi1 = 2pi * k / N
         phi2 = 2pi * (k+1) / N
-        pos_1 = to_cartesian(theta2, phi1) + extrude * Point3f0(0,0,-1)
-        pos_2 = to_cartesian(theta2, phi2) + extrude * Point3f0(0,0,-1)
+        pos_1 = to_cartesian(theta2, phi1) + extrude * Point3f(0,0,-1)
+        pos_2 = to_cartesian(theta2, phi2) + extrude * Point3f(0,0,-1)
         push!(vertices, pos_1)
         push!(vertices, pos_2)
         push!(faces, GLTriangleFace(l, l+2+2k, l+1+2k))
@@ -159,7 +159,7 @@ This list is equivalent to the vertices used in `vertex_mesh(B)`.
 See also: [`vertex_mesh`](@ref)
 """
 function bin_positions(B::SSHBinner)
-    points = Point3f0[Point3f0(0, 0, 1)]
+    points = Point3f[Point3f(0, 0, 1)]
 
     for i in 2:length(B.thetas)-2
         theta = 0.5(B.thetas[i] + B.thetas[i+1])
@@ -170,7 +170,7 @@ function bin_positions(B::SSHBinner)
             push!(points, to_cartesian(theta, phi))
         end
     end
-    push!(points, Point3f0(0, 0, -1))
+    push!(points, Point3f(0, 0, -1))
 
     points
 end
@@ -185,7 +185,7 @@ sense that doesn't interpolate any points.
 See also: [`line_segments`](@ref)
 """
 function line_segments_minimal(B::SSHBinner)
-    lines = Point3f0[]
+    lines = Point3f[]
 
     # first ring
     theta = B.thetas[2]
@@ -235,7 +235,7 @@ Specifically, points are added to an arc, such that it would include at least
 See also: [`line_segments_minimal`](@ref)
 """
 function line_segments(B::SSHBinner; N_fragments=32)
-    lines = Point3f0[]
+    lines = Point3f[]
 
     # horizontal rings
     for theta in B.thetas[2:end-1]
