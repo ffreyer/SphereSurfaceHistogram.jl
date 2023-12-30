@@ -1,15 +1,15 @@
 import .Makie: convert_arguments, plot!
 
 # bin centers
-function convert_arguments(P::Type{<:Scatter}, B::SSHBinner)
+function convert_arguments(P::Type{<:Scatter}, B::AbstractSSH)
     convert_arguments(P, bin_positions(B))
 end
 # mesh with vertices @ bin centers (makes color mapping easy)
-function convert_arguments(P::Type{<:Makie.Mesh}, B::SSHBinner)
+function convert_arguments(P::Type{<:Makie.Mesh}, B::AbstractSSH)
     convert_arguments(P, vertex_mesh(B))
 end
 # boundaries of bins (slightly enlarged to work with mesh)
-function convert_arguments(P::Type{<:LineSegments}, B::SSHBinner)
+function convert_arguments(P::Type{<:LineSegments}, B::AbstractSSH)
     convert_arguments(P, 1.001line_segments(B))
 end
 
@@ -17,8 +17,8 @@ end
 # Not sure if I wanna keep this. Would probably be nice to have a colorlegend
 # by default here
 """
-    histogram(B::SSHBinner)
-    histogram!(scene, B::SSHBinner)
+    histogram(B::AbstractSSH)
+    histogram!(scene, B::AbstractSSH)
 
 Plots a histogram for the given SSHBinner.
 
@@ -47,14 +47,15 @@ end
 
 function map_bin_to_color(binner, colormap, colorscale, colorrange)
     map(binner, colormap, colorscale) do binner, cm, scale
-        ex = extrema(binner.bins)
+        vals = get_values(binner)
+        ex = extrema(vals)
         if scale == :absolute
             colorrange[] = (0, ex[2])
         elseif scale == :static
         else
             colorrange[] = (ex[1], ex[2])
         end
-        map(binner.bins) do b
+        map(vals) do b
             RGBAf(Makie.interpolated_getindex(
                 to_colormap(cm), Float64(b), colorrange[]
             ))
@@ -82,7 +83,7 @@ end
 # function histogram(B::SSHBinner, color_method=to_hue)
 #     _colors = color_method(B)
 #     is_transparent = any(c -> c.alpha < 1.0, _colors)
-#     AbstractPlotting.mesh(vertex_mesh(B), color = _colors, transparency = is_transparent)
+#     Makie.mesh(vertex_mesh(B), color = _colors, transparency = is_transparent)
 # end
 #
 #
@@ -95,9 +96,9 @@ end
 # function plot_debug(B::SSHBinner, color_method = to_hue)
     # _colors = color_method(B)
     # is_transparent = any(c -> c.alpha < 1.0, _colors)
-    # scene = AbstractPlotting.mesh(vertex_mesh(B), color = _colors, transparency = is_transparent)
-    # AbstractPlotting.linesegments!(scene, 1.001line_segments(B), color = :black)
-    # # AbstractPlotting.mesh!(scene1, to_rects(B, extrude), color = RGBA(1, 1, 1, 0.2), transparency = true)
-    # AbstractPlotting.scatter!(scene, 1.005bin_positions(B), color=:black, markersize=0.01)
+    # scene = Makie.mesh(vertex_mesh(B), color = _colors, transparency = is_transparent)
+    # Makie.linesegments!(scene, 1.001line_segments(B), color = :black)
+    # # Makie.mesh!(scene1, to_rects(B, extrude), color = RGBA(1, 1, 1, 0.2), transparency = true)
+    # Makie.scatter!(scene, 1.005bin_positions(B), color=:black, markersize=0.01)
     # scene
 # end

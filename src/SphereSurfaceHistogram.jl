@@ -2,11 +2,15 @@ module SphereSurfaceHistogram
 
 using Requires
 
-include("binning.jl")
+include("generic.jl")
+include("counting.jl")
+include("averaging.jl")
 include("utils.jl")
-export SSHBinner
+
+export SSHBinner, SSHAverager
 export partition_sphere1, partition_sphere2
-export push!, append!, unsafe_append!
+export unsafe_append!
+export get_values
 
 #include("Makie.jl")
 # _DIR = @__DIR__
@@ -27,11 +31,6 @@ function __init__()
         export face_mesh, vertex_mesh
         export bin_positions
         export line_segments_minimal, line_segments
-    end
-    @require AbstractPlotting="537997a7-5e4e-5d89-9595-2241ea00577e" begin
-        using .AbstractPlotting
-        include("extras/AbstractPlotting.jl")
-        export histogram, plot_debug
     end
     @require Makie="ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a" begin
         using .Makie

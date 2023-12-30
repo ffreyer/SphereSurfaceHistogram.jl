@@ -1,86 +1,54 @@
-struct SSHBinner
-    thetas::Vector{Float64}
-    phi_divisions::Vector{Int64}
-
-    # bin_many helpers
-    zs::Vector{Float64}
-    phi_N_over_2pi::Vector{Float64}
-    cumsum::Vector{Int64}
-    N_thetas::Float64
-
-    bins::Vector{Int64}
-end
-
+abstract type AbstractSSH end
+# Child must contain:
+# thetas, phi_divisions, phi_N_over_2pi, phi_cumsum, N_thetas, theta_factor
+# must implement get_value and get_values
 
 ################################################################################
-### Constructor
+### Generic Constructor
 ################################################################################
 
-
-function SSHBinner(thetas::Vector{Float64}, phi_divisions::Vector{Int64})
-    # Precalculate N/2pi for bin_many!
+function construct(T::Type{<: AbstractSSH}, thetas::Vector{Float64}, phi_divisions::Vector{Int64})
+    # Precalculate N/2pi for push!
     # use slightly more than 2pi to guarantee phi * phi_N_over_pi ∈ [0, 1)
     PI_PLUS = 2.0pi + 1e-14
     phi_N_over_2pi = phi_divisions ./ PI_PLUS
 
-    # Precalculate z(θ) for bin_many!
+    # Also precalculate cumulative number of bins for each theta (from 0..pi)
+    phi_cumsum = cumsum(phi_divisions)
+
+    # Precalculate z(θ) for push!
     # move slightly to negative values to guarantee that for an input value
     # value[3] >= minimum(zs)
     zs = cos.(thetas) #.- 1e-14 # 1...-1
     zs[end] -= 1e-14
 
-    # Also precalculate cumulative number of bins for each theta (from 0..pi)
-    _cumsum = cumsum(phi_divisions)
-
+    # for converting z values/angles to indices
     # to avoid conversions to Float64
     N_thetas = Float64(length(thetas)-1)
+    theta_factor = Float64(length(thetas)-1) / (pi + 1e-14)
 
     N_bins = sum(phi_divisions)
     bins = zeros(Int64, N_bins)
-    SSHBinner(thetas, phi_divisions, zs, phi_N_over_2pi, _cumsum, N_thetas, bins)
+
+    return T(thetas, phi_divisions, zs, phi_N_over_2pi, phi_cumsum, N_thetas, theta_factor, bins)
 end
 
-"""
-    SSHBinner(N_bins)
 
-Generate a Sphere Surface Histogram Binner with approximately N_bins.
-"""
-SSHBinner(N_bins::Real; kwargs...) = SSHBinner(round(Int64, N_bins); kwargs...)
-function SSHBinner(N_bins::Int64; method=partition_sphere2)
+(T::Type{<: AbstractSSH})(N_bins::Real; kwargs...) = T(round(Int64, N_bins); kwargs...)
+function (T::Type{<: AbstractSSH})(N_bins::Int64; method=partition_sphere2)
     thetas, phi_divisions = partition_sphere_optim(4pi/N_bins, method=method)
-    SSHBinner(thetas, phi_divisions)
+    return construct(T, thetas, phi_divisions)
 end
-
-"""
-    SSHBinner(bins)
-
-Generate a Sphere Surface Histogram Binner using the `bins` of another
-SSHBinner. This effectively creates a copy of the other source `SSHBinner`.
-"""
-function SSHBinner(bins::Vector; method=partition_sphere2)
-    N_bins = length(bins)
-    thetas, phi_divisions = method(4pi/N_bins)
-
-    PI_PLUS = 2.0pi + 1e-14
-    phi_N_over_2pi = phi_divisions ./ PI_PLUS
-    zs = cos.(thetas)
-    zs[end] -= 1e-14
-    _cumsum = cumsum(phi_divisions)
-    N_thetas = Float64(length(thetas)-1)
-
-    SSHBinner(thetas, phi_divisions, zs, phi_N_over_2pi, _cumsum, N_thetas, bins)
-end
-
 
 """
     partition_sphere2(dA)
 
-Partitions a sphere into bins of size `dA` where number of divisions in ϕ 
+Partitions a sphere into bins of size `dA` where number of divisions in ϕ
 (0..2π) is restricted to a power of 2.
 
-Note that for a random `dA` this will not produce equally sized bins. 
-(Specifically bins at z ≈ 0 will be wrong.) The algorithm relies on 
-`partition_sphere_optim` to optimize `dA` to a value fitting on the sphere 
+Note that for a random `dA` this will not produce equally sized bins.
+(Specifically bins at z ≈ 0 will be wrong.) The algorithm relies on
+`partition_sphere_optim` to optimize `dA` to a value fitting on the sphere
 surface which happens during the creation of an `SSHBinner`.
 """
 function partition_sphere2(dA)
@@ -155,12 +123,12 @@ end
 """
     partition_sphere1(dA)
 
-Partitions a sphere into bins of size `dA` where number of divisions in ϕ 
+Partitions a sphere into bins of size `dA` where number of divisions in ϕ
 (0..2π) is not restricted, i.e. it can be any integer.
-    
-Note that for a random `dA` this will not produce equally sized bins. 
-(Specifically bins at z ≈ 0 will be wrong.) The algorithm relies on 
-`partition_sphere_optim` to optimize `dA` to a value fitting on the sphere 
+
+Note that for a random `dA` this will not produce equally sized bins.
+(Specifically bins at z ≈ 0 will be wrong.) The algorithm relies on
+`partition_sphere_optim` to optimize `dA` to a value fitting on the sphere
 surface which happens during the creation of an `SSHBinner`.
 """
 function partition_sphere1(dA,)
@@ -281,53 +249,54 @@ end
     ) + 1
 end
 
-
+# Note:
 # Tested for 10, 1000, 10_000_000 bins, each with 1_000_000 random spins pushed
-@inline function fast_theta_index_search(B::SSHBinner, value)
-    index = fast_theta_index_approximation(value, B.N_thetas)
-    if value > B.zs[index]
+@inline function fast_theta_index_search(B::AbstractSSH, z)
+    index = fast_theta_index_approximation(z, B.N_thetas)
+    if z > B.zs[index]
         while true
             index -= 1
-            value <= B.zs[index] && (return index)
+            z <= B.zs[index] && (return index)
         end
-    elseif B.zs[index] >= value
+    elseif B.zs[index] >= z
         while true
             index += 1
-            B.zs[index] < value && (return index-1)
+            B.zs[index] < z && (return index-1)
         end
     end
     return index
 end
 
-
-
-"""
-    push!(B::SSHBinner, value)
-
-Bins a single value (three dimensional unit vector).
-"""
-function Base.push!(B::SSHBinner, value)
-    theta_index = fast_theta_index_search(B, value[3])
+function bin_index(B::AbstractSSH, vec)
+    theta_index = fast_theta_index_search(B, vec[3])
     phi_index = if B.phi_divisions[theta_index] == 1
         1
     else
         # Normalize xy-component
         # y >= 0 for 0..pi, else y < 0
         # acos(x) well defined for 0..pi
-        R = sqrt(value[1]^2 + value[2]^2)
-        phi = if value[2] >= 0.0
-            acos(value[1]/R)
+        R = sqrt(vec[1]^2 + vec[2]^2)
+        phi = if vec[2] >= 0.0
+            acos(vec[1]/R)
         else
-            2.0pi - acos(value[1]/R)
+            2.0pi - acos(vec[1]/R)
         end
 
         trunc(Int64, phi * B.phi_N_over_2pi[theta_index]) + 1
     end
 
     # Calculate position in bins
-    l = theta_index > 1 ? B.cumsum[theta_index-1] : 0
-    B.bins[l+phi_index] += 1
-    nothing
+    l = theta_index > 1 ? B.phi_cumsum[theta_index-1] : 0
+    return l + phi_index
+end
+
+function bin_index(B::AbstractSSH, theta, phi)
+    theta_index = trunc(Int64, B.theta_factor * theta) + 1
+    phi_index = trunc(Int64, B.phi_N_over_2pi[theta_index] * phi) + 1
+
+    # Calculate position in bins
+    l = theta_index > 1 ? B.phi_cumsum[theta_index-1] : 0
+    return l + phi_index
 end
 
 
@@ -336,21 +305,23 @@ end
 
 Bins an array of values (three dimensional unit vectors).
 """
-function Base.append!(B::SSHBinner, values)
+function Base.append!(B::AbstractSSH, values)
     for v in values
         push!(B, v)
     end
     nothing
 end
 
-"""
-    unsafe_append!(B::SSHBinner, values)
+function Base.append!(B::AbstractSSH, as, bs)
+    for (a, b) in zip(as, bs)
+        push!(B, a, b)
+    end
+    nothing
+end
 
-Bins an arra of values (three dimensional unit vector) without boundschecks.
-"""
-function unsafe_append!(B::SSHBinner, values)
-    for v in values
-        @inbounds push!(B, v)
+function Base.append!(B::AbstractSSH, as, bs, cs)
+    for (a, b, c) in zip(as, bs, cs)
+        push!(B, a, b, c)
     end
     nothing
 end

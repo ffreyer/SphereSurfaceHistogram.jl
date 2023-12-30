@@ -4,6 +4,13 @@
 Calculates the cartesian vector (x, y, z) for a given pair of angles (polar/z
 angle theta, azimut/xy angle phi).
 """
+function to_cartesian(radius, theta, phi)
+    Vec3f0(
+        radius * sin(theta) * cos(phi),
+        radius * sin(theta) * sin(phi),
+        radius * cos(theta)
+    )
+end
 function to_cartesian(theta, phi)
     Vec3f0(
         sin(theta) * cos(phi),
@@ -14,25 +21,25 @@ end
 
 
 """
-    face_mesh(B::SSHBinner, extrude=0)
+    face_mesh(B::AbstractSSH, radius = 1, extrude = 0)
 
 Generates a tiled/disconnected mesh where each face represents a bin.
 
 `extrude` allows faces to be moved outwards (≈ (1 + extrude)eᵣ). For
 `extrude > 0` the faces will sperate, making their shape easier to see.
 """
-function face_mesh(B::SSHBinner, extrude=0)
+function face_mesh(B::AbstractSSH, radius = 1, extrude = 0)
     vertices = Point3f[]
     faces = GLTriangleFace[]
 
-    push!(vertices, Point3f(0, 0, 1) + extrude * Point3f(0,0,1))
+    push!(vertices, Point3f(0, 0, radius) + extrude * Point3f(0,0,1))
     theta2 = B.thetas[2]
     N = B.phi_divisions[2]
     for k in 0:N-1
         phi1 = 2pi * k/N
         phi2 = 2pi * (k+1) / N
-        pos_1 = to_cartesian(theta2, phi1) + extrude * Point3f(0,0,1)
-        pos_2 = to_cartesian(theta2, phi2) + extrude * Point3f(0,0,1)
+        pos_1 = to_cartesian(radius, theta2, phi1) + extrude * Point3f(0,0,1)
+        pos_2 = to_cartesian(radius, theta2, phi2) + extrude * Point3f(0,0,1)
         push!(vertices, pos_1)
         push!(vertices, pos_2)
         push!(faces, GLTriangleFace(1, 2+2k, 3+2k))
@@ -46,10 +53,10 @@ function face_mesh(B::SSHBinner, extrude=0)
         for k in 0:N-1
             phi1 = 2pi * k / N
             phi2 = 2pi * (k+1) / N
-            pos_11 = to_cartesian(theta1, phi1)
-            pos_12 = to_cartesian(theta1, phi2)
-            pos_21 = to_cartesian(theta2, phi1)
-            pos_22 = to_cartesian(theta2, phi2)
+            pos_11 = to_cartesian(radius, theta1, phi1)
+            pos_12 = to_cartesian(radius, theta1, phi2)
+            pos_21 = to_cartesian(radius, theta2, phi1)
+            pos_22 = to_cartesian(radius, theta2, phi2)
 
             # extrude "rects"
             dir = 0.25(pos_11 + pos_12 + pos_21 + pos_22)
@@ -73,20 +80,20 @@ function face_mesh(B::SSHBinner, extrude=0)
     for k in 0:N-1
         phi1 = 2pi * k / N
         phi2 = 2pi * (k+1) / N
-        pos_1 = to_cartesian(theta2, phi1) + extrude * Point3f(0,0,-1)
-        pos_2 = to_cartesian(theta2, phi2) + extrude * Point3f(0,0,-1)
+        pos_1 = to_cartesian(radius, theta2, phi1) + extrude * Point3f(0,0,-1)
+        pos_2 = to_cartesian(radius, theta2, phi2) + extrude * Point3f(0,0,-1)
         push!(vertices, pos_1)
         push!(vertices, pos_2)
         push!(faces, GLTriangleFace(l, l+2+2k, l+1+2k))
     end
 
     # GeometryBasics.Mesh(GeometryBasics.meta(vertices; normals=ns), faces)
-    normal_mesh(vertices, faces)
+    return normal_mesh(vertices, faces)
 end
 
 
 """
-    vertex_mesh(B::SSHBinner)
+    vertex_mesh(B::AbstractSSH)
 
 Generates a mesh where each vertex represents (the center of) a bin.
 
@@ -97,7 +104,7 @@ corresponding to the vertices of this mesh (in order). This can be plotted with
 
 See also: [`bin_positions`](@ref), [`face_mesh`](@ref)
 """
-function vertex_mesh(B::SSHBinner)
+function vertex_mesh(B::AbstractSSH, radius = 1.0)
     faces = GLTriangleFace[]
 
     N = 0
@@ -146,7 +153,7 @@ function vertex_mesh(B::SSHBinner)
     end
 
     # GeometryBasics.Mesh(GeometryBasics.meta(vertices; normals=ns), faces)
-    normal_mesh(bin_positions(B), faces)
+    return normal_mesh(bin_positions(B, radius), faces)
 end
 
 
@@ -158,33 +165,36 @@ This list is equivalent to the vertices used in `vertex_mesh(B)`.
 
 See also: [`vertex_mesh`](@ref)
 """
-function bin_positions(B::SSHBinner)
-    points = Point3f[Point3f(0, 0, 1)]
+function bin_positions(B::AbstractSSH, radius = 1.0)
+    points = Vector{Point3f}(undef, length(B))
+    points[1] = Point3f[Point3f(0, 0, radius)]
 
+    idx = 2
     for i in 2:length(B.thetas)-2
         theta = 0.5(B.thetas[i] + B.thetas[i+1])
         N = B.phi_divisions[i]
 
         for k in 0:N-1
             phi = 2pi * (k + 0.5) / N
-            push!(points, to_cartesian(theta, phi))
+            points[idx] = to_cartesian(radius, theta, phi)
+            idx += 1
         end
     end
-    push!(points, Point3f(0, 0, -1))
+    points[end] = Point3f(0, 0, -radius)
 
-    points
+    return points
 end
 
 
 """
-    line_segments_minimal(B::SSHBinner)
+    line_segments_minimal(B::AbstractSSH)
 
 Generates linesegments marking each bin area. This version is minimal in the
 sense that doesn't interpolate any points.
 
 See also: [`line_segments`](@ref)
 """
-function line_segments_minimal(B::SSHBinner)
+function line_segments_minimal(B::AbstractSSH, radius = 1)
     lines = Point3f[]
 
     # first ring
@@ -193,7 +203,7 @@ function line_segments_minimal(B::SSHBinner)
     for k in 0:N-1
         phi1 = 2pi * k / N
         phi2 = 2pi * (k+1) / N
-        append!(lines, [to_cartesian(theta, phi1), to_cartesian(theta, phi2)])
+        append!(lines, [to_cartesian(radius, theta, phi1), to_cartesian(radius, theta, phi2)])
     end
 
     # Any thing after that is 1 vertical and 1 horizontal line
@@ -213,18 +223,18 @@ function line_segments_minimal(B::SSHBinner)
             phi2 = 2pi * (k+1) / N
 
             # horizontal lines
-            append!(lines, [to_cartesian(theta2, phi1), to_cartesian(theta2, phi2)])
+            append!(lines, [to_cartesian(radius, theta2, phi1), to_cartesian(radius, theta2, phi2)])
             # vertical line
-            append!(lines, [to_cartesian(theta2, phi1), to_cartesian(theta1, phi1)])
+            append!(lines, [to_cartesian(radius, theta2, phi1), to_cartesian(radius, theta1, phi1)])
         end
     end
 
-    lines
+    return lines
 end
 
 
 """
-    line_segments(B::SSHBinner; N_fragments = 32)
+    line_segments(B::AbstractSSH; N_fragments = 32)
 
 Generates line segments marking each bin area. Extra points may be interpolated
 to generate smooth arcs.
@@ -234,7 +244,7 @@ Specifically, points are added to an arc, such that it would include at least
 
 See also: [`line_segments_minimal`](@ref)
 """
-function line_segments(B::SSHBinner; N_fragments=32)
+function line_segments(B::AbstractSSH, radius = 1.0; N_fragments=32)
     lines = Point3f[]
 
     # horizontal rings
@@ -246,7 +256,7 @@ function line_segments(B::SSHBinner; N_fragments=32)
         for k in 0:2N_fragments-1
             phi1 = pi * k / N_fragments
             phi2 = pi * (k+1) / N_fragments
-            append!(lines, [to_cartesian(theta, phi1), to_cartesian(theta, phi2)])
+            append!(lines, [to_cartesian(radius, theta, phi1), to_cartesian(radius, theta, phi2)])
         end
     end
 
@@ -274,12 +284,12 @@ function line_segments(B::SSHBinner; N_fragments=32)
 
                 # vertical line
                 append!(lines, [
-                    to_cartesian(t2, phi1),
-                    to_cartesian(t1, phi1)
+                    to_cartesian(radius, t2, phi1),
+                    to_cartesian(radius, t1, phi1)
                 ])
             end
         end
     end
 
-    lines
+    return lines
 end
