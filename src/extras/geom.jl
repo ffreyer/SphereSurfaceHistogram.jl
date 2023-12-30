@@ -20,6 +20,7 @@ function to_cartesian(theta, phi)
 end
 
 
+# TODO: this has holes
 """
     face_mesh(B::AbstractSSH, radius = 1, extrude = 0)
 
@@ -66,7 +67,7 @@ function face_mesh(B::AbstractSSH, radius = 1, extrude = 0)
             pos_22 += extrude*dir
 
             l = length(vertices)
-            append!(vertices, [pos_11, pos_12, pos_21, pos_22])
+            push!(vertices, pos_11, pos_12, pos_21, pos_22)
             push!(faces, GLTriangleFace(l+1, l+3, l+2))
             push!(faces, GLTriangleFace(l+2, l+3, l+4))
         end
@@ -89,6 +90,53 @@ function face_mesh(B::AbstractSSH, radius = 1, extrude = 0)
 
     # GeometryBasics.Mesh(GeometryBasics.meta(vertices; normals=ns), faces)
     return normal_mesh(vertices, faces)
+end
+
+# TODO: this is not correct - faces missplaced
+function voxel_mesh(B::AbstractSSH; radius = 1, thickness = 0.1)
+    _mesh = face_mesh(B, radius)
+    vs = decompose(Point3f, _mesh)
+    fs = faces(_mesh)
+    N = length(vs)
+
+    voxel_vs = vcat(
+        (radius - 0.5 * thickness) / radius .* vs,
+        (radius + 0.5 * thickness) / radius .* vs
+    )
+    voxel_fs = vcat(fs, [GLTriangleFace(f[1] + N, f[2] + N, f[3] + N) for f in fs])
+
+    # top face
+    # exclude center point at (0, 0, z)
+    N = B.phi_divisions[2]
+    for k in 0:N-1
+        push!(voxel_fs, GLTriangleFace(2+2k, 3+2k, 2+2k+N), GLTriangleFace(3+2k, 3+2k+N, 2+2k+N))
+    end
+
+    # vertex counter
+    l = 2*(N-1) + 1
+
+    # main body faces
+    # each section here is a quad
+    for i in 2:length(B.phi_divisions)-1
+        N = B.phi_divisions[i]
+        for k in 0:N-1
+            l += 4
+            push!(voxel_fs,
+                GLTriangleFace(l+1, l+3, l+1+N), GLTriangleFace(l+3, l+3+N, l+1+N),
+                GLTriangleFace(l+3, l+4, l+3+N), GLTriangleFace(l+4, l+4+N, l+3+N),
+                GLTriangleFace(l+4, l+2, l+4+N), GLTriangleFace(l+2, l+2+N, l+4+N),
+                GLTriangleFace(l+2, l+1, l+2+N), GLTriangleFace(l+1, l+1+N, l+2+N)
+            )
+        end
+    end
+
+    # l+1 is the center, exclude that
+    N = B.phi_divisions[end-1]
+    for k in 0:N-1
+        push!(voxel_fs, GLTriangleFace(l+3+2k, l+2+2k, l+3+2k+N), GLTriangleFace(l+2+2k, l+2+2k+N, l+3+2k+N))
+    end
+
+    return normal_mesh(voxel_vs, voxel_fs)
 end
 
 

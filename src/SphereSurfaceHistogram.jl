@@ -28,7 +28,8 @@ function __init__()
     @require GeometryBasics="5c1252a2-5f33-56bf-86c9-59e7332b4326" begin
         using .GeometryBasics
         include("extras/geom.jl")
-        export face_mesh, vertex_mesh
+        export vertex_mesh
+        # export face_mesh, voxel_mesh
         export bin_positions
         export line_segments_minimal, line_segments
     end
