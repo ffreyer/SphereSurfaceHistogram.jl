@@ -59,13 +59,21 @@ function Base.append!(B::AbstractSSH, as, bs)
     nothing
 end
 
-function Base.append!(B::AbstractSSH, as, bs, cs)
+function Base.append!(B::AbstractSSH, as::AbstractVector, bs::AbstractVector, cs::AbstractVector)
     for (a, b, c) in zip(as, bs, cs)
         push!(B, a, b, c)
     end
     nothing
 end
 
+function Base.append!(B::AbstractSSH, as::AbstractVector, bs::AbstractVector, cs::AbstractMatrix)
+    for j in eachindex(bs)
+        for i in eachindex(as)
+            push!(B, as[i], bs[j], cs[i, j])
+        end
+    end
+    nothing
+end
 
 ################################################################################
 ### getindex(B, phi, theta)
