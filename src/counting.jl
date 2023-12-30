@@ -46,7 +46,7 @@ follow the physics convention, i.e.
 - `theta` is 0 in +z direction and pi at -z direction and
 - `phi` is 0 at +x direction, increasing counterclockwise (pi/2 at +y)
 """
-function Base.push!(B::SSHBinner, theta::AbstractFloat, phi::AbstractFloat)
+function Base.push!(B::SSHBinner, theta::Real, phi::Real)
     B.bins[bin_index(B.tessellation, theta, phi)] += 1
     return nothing
 end

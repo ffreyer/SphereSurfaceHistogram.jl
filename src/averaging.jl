@@ -30,12 +30,12 @@ function SSHAverager(sums::Vector{Float64}, counts::Vector{Int64}; method=partit
 end
 
 """
-    push!(B::SSHAverager, vec::AbstractVector, value::AbstractFloat)
+    push!(B::SSHAverager, vec::AbstractVector, value::Real)
 
 Adds a single value at a position given by a cartesian vec (three dimensional
 unit vector) to the mean.
 """
-function Base.push!(B::SSHAverager, vec::AbstractVector, value::AbstractFloat)
+function Base.push!(B::SSHAverager, vec::AbstractVector, value::Real)
     idx = bin_index(B.tessellation, vec)
     B.sums[idx] += value
     B.counts[] += 1
@@ -43,14 +43,14 @@ function Base.push!(B::SSHAverager, vec::AbstractVector, value::AbstractFloat)
 end
 
 """
-    push!(B::SSHAverager, theta::AbstractFloat, phi::AbstractFloat, value::AbstractFloat)
+    push!(B::SSHAverager, theta::Real, phi::Real, value::Real)
 
 Adds a single value at the given angles theta and phi to the running mean. The
 angles follow the physics convention, i.e.
 - `theta` is 0 in +z direction and pi at -z direction and
 - `phi` is 0 at +x direction, increasing counterclockwise (pi/2 at +y)
 """
-function Base.push!(B::SSHAverager, theta::AbstractFloat, phi::AbstractFloat, value::AbstractFloat)
+function Base.push!(B::SSHAverager, theta::Real, phi::Real, value::Real)
     idx = bin_index(B.tessellation, theta, phi)
     B.sums[idx] += value
     B.counts[idx] += 1

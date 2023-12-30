@@ -37,6 +37,28 @@ using Test
                     push!(center_matched_bin, B.bins[i] == 1)
                 end
                 @test all(center_matched_bin)
+
+                # And again with angles
+                empty!(B)
+                empty!(center_matched_bin)
+                idx = 1
+                push!(B, 0.0, 0.0)
+                push!(center_matched_bin, B.bins[idx] == 1)
+                idx += 1
+                for i in 2:length(B.tessellation.thetas)-2
+                    theta = 0.5(B.tessellation.thetas[i] + B.tessellation.thetas[i+1])
+                    N = B.tessellation.phi_divisions[i]
+
+                    for k in 0:N-1
+                        phi = 2pi * (k + 0.5) / N
+                        push!(B, theta, phi)
+                        push!(center_matched_bin, B.bins[idx] == 1)
+                        idx += 1
+                    end
+                end
+                push!(B, pi, 0.0)
+                push!(center_matched_bin, B.bins[idx] == 1)
+                @test all(center_matched_bin)
             end
         end
     end
