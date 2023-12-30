@@ -249,14 +249,10 @@ function line_segments(B::AbstractSSH, radius = 1.0; N_fragments=32)
 
     # horizontal rings
     for theta in B.thetas[2:end-1]
-        z = cos(theta)
-        # Number of steps
-        R_xy = sqrt(1.0 - z^2)
-        # circumference = 2πR, make more points if longer line
         for k in 0:2N_fragments-1
             phi1 = pi * k / N_fragments
             phi2 = pi * (k+1) / N_fragments
-            append!(lines, [to_cartesian(radius, theta, phi1), to_cartesian(radius, theta, phi2)])
+            push!(lines, to_cartesian(radius, theta, phi1), to_cartesian(radius, theta, phi2))
         end
     end
 
@@ -276,17 +272,13 @@ function line_segments(B::AbstractSSH, radius = 1.0; N_fragments=32)
         end
 
         for k in 0:N-1
-            phi1 = 2pi * k / N
-            phi2 = 2pi * (k+1) / N
+            phi = 2pi * k / N
             for c in 0:substeps-1
                 t1 = theta1 + c/substeps * (theta2 - theta1)
                 t2 = theta1 + (c+1)/substeps * (theta2 - theta1)
 
                 # vertical line
-                append!(lines, [
-                    to_cartesian(radius, t2, phi1),
-                    to_cartesian(radius, t1, phi1)
-                ])
+                push!(lines, to_cartesian(radius, t2, phi), to_cartesian(radius, t1, phi))
             end
         end
     end
