@@ -1,13 +1,19 @@
 # SphereSurfaceHistogram.jl
 
-`SphereSurfaceHistogram` is a package for binning 3D unit vectors. Each bin has the same size - i.e. it covers the same (curved) area on a unit sphere.
+`SphereSurfaceHistogram` is a package for binning 3D unit vectors.
+Each bin has the same size - i.e. it covers (approximately) the same (curved) area on a unit sphere.
+
+There are currently two ways to bin values in the package.
+The first is `SSHBinner` which simply counts how often a bin has been pushed to.
+The other is `SSHAverager` which reports the average float value that has been pushed to a specific bin.
 
 ```@contents
 ```
 
 ## Quickstart
 
-An empty histogram binner with approximately `10_000` bins can be created with
+
+An empty binner with approximately `10_000` bins can be created with
 
 ```@repl
 using SphereSurfaceHistogram
@@ -25,6 +31,25 @@ append!(binner, [[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
 
 !!! warning
     SphereSurfaceHistogram does not verify that the given vector is normalized.
+
+`SSHAverager` works analogously:
+
+```@repl
+using SphereSurfaceHistogram
+binner = SSHaverager(10_000)
+push!(binner, [1.0, 0.0, 0.0], 1.6)
+append!(binner, [[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], [0.3, 0.6])
+```
+
+You can also push to a binner using angles of a spherical coordinate system.
+This follows the physics convention as mentioned on [wikipedia](https://en.wikipedia.org/wiki/Spherical_coordinate_system), i.e. with $theta \in (0, pi)$ being the angle between the z axis and the vector and $phi \in (0, 2pi)$ extending counterclockwise from the x axis.
+
+```@repl
+push!(binner, 0.5pi, 1.7pi) # theta, phi
+```
+
+!!! warning
+    SphereSurfaceHistogram does not verify that the given angles are in bounds.
 
 ## Accessing the Histogram
 
@@ -59,7 +84,7 @@ fig
 ```
 
 !!! info
-    Plotting methods are not loaded by default. SphereSurfaceHistogram makes use of `Requires.jl` to dynamically load plotting related methods when `AbstractPlotting.jl` becomes available.
+    Plotting methods are not loaded by default. SphereSurfaceHistogram makes use of `Requires.jl` to dynamically load plotting related methods when `Makie.jl` becomes available.
 
 !!! info
-    Mesh generation methods can also be loaded individually. If you want to use the mesh generation methods without `Makie`, you should import `GeometryTypes.jl`.
+    Mesh generation methods can also be loaded individually. If you want to use the mesh generation methods without `Makie`, you should import `GeometryBasics.jl`.
