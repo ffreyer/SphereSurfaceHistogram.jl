@@ -167,7 +167,7 @@ See also: [`vertex_mesh`](@ref)
 """
 function bin_positions(B::AbstractSSH, radius = 1.0)
     points = Vector{Point3f}(undef, length(B))
-    points[1] = Point3f[Point3f(0, 0, radius)]
+    points[1] = Point3f(0, 0, radius)
 
     idx = 2
     for i in 2:length(B.thetas)-2

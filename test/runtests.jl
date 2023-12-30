@@ -23,10 +23,7 @@ using Test
 
 
     @testset "Flat Histogram" begin
-        for method in [
-            SphereSurfaceHistogram.partition_sphere1,
-            SphereSurfaceHistogram.partition_sphere2
-        ]
+        for method in (partition_sphere1, partition_sphere2)
             for _ in 1:10
                 N = floor(Int64, 100_000rand()) + 1_000
                 B = SSHBinner(N, method=method)

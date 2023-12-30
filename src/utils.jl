@@ -79,7 +79,7 @@ function Base.getindex(B::AbstractSSH, theta::Real, ::Colon)
     theta_index == 1 || (theta_index -= 1)
 
     l = theta_index > 1 ? B.phi_cumsum[theta_index-1] : 0
-    return get_value.((B,), l + phi_index)
+    return get_value.((B,), l .+ (1:B.phi_divisions[theta_index]))
 end
 
 # colon theta
