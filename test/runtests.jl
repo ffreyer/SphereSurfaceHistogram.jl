@@ -23,10 +23,7 @@ using Test
 
 
     @testset "Flat Histogram" begin
-        for method in [
-            SphereSurfaceHistogram.partition_sphere1,
-            SphereSurfaceHistogram.partition_sphere2
-        ]
+        for method in (partition_sphere1, partition_sphere2)
             for _ in 1:10
                 N = floor(Int64, 100_000rand()) + 1_000
                 B = SSHBinner(N, method=method)
@@ -40,20 +37,120 @@ using Test
                     push!(center_matched_bin, B.bins[i] == 1)
                 end
                 @test all(center_matched_bin)
+
+                # And again with angles
+                empty!(B)
+                empty!(center_matched_bin)
+                idx = 1
+                push!(B, 0.0, 0.0)
+                push!(center_matched_bin, B.bins[idx] == 1)
+                idx += 1
+                for i in 2:length(B.tessellation.thetas)-2
+                    theta = 0.5(B.tessellation.thetas[i] + B.tessellation.thetas[i+1])
+                    N = B.tessellation.phi_divisions[i]
+
+                    for k in 0:N-1
+                        phi = 2pi * (k + 0.5) / N
+                        push!(B, theta, phi)
+                        push!(center_matched_bin, B.bins[idx] == 1)
+                        idx += 1
+                    end
+                end
+                push!(B, pi, 0.0)
+                push!(center_matched_bin, B.bins[idx] == 1)
+                @test all(center_matched_bin)
+            end
+        end
+
+        # Check bin smoothness
+        B = SSHBinner(10_000)
+        append!(B, pi/2 * ones(100_000), range(0, 2pi, 100_001)[1:end-1])
+        @test B.bins[4905] == 0
+        mi, ma = extrema(view(B.bins, 4906:5033))
+        @test (781 <= mi) && (ma <= 782)
+        @test B.bins[5034] == 0
+
+        B = SSHBinner(10_000)
+        append!(B, range(0, pi, 100_001)[1:end-1], zeros(100_000))
+        ws = B.tessellation.thetas[2:end] .- B.tessellation.thetas[1:end-1]
+        mi, ma = extrema(B[:, 0.0] ./ ws)
+        @test (31780 <= mi) && (ma <= 31880)
+    end
+
+    @testset "Indexing" begin
+        for T in (SSHBinner, SSHAverager)
+            B = T(10_000)
+            if T == SSHBinner
+                append!(B, [[cos(pi), sin(pi), 0.0] for _ in 1:1000])
+                # true position is 4969
+                @test B.bins[4969] == 1000
+            else
+                append!(B, [[cos(pi), sin(pi), 0.0] for _ in 1:1000], ones(1000))
+                # true position is 4969
+                @test B.counts[4969] == 1000
+                @test B.sums[4969] == 1000.0
+            end
+
+            result = SphereSurfaceHistogram.get_value(B, 4969)
+            # indexing
+            @test B[pi/2, pi] == result
+            @test sum(B[pi/2, :]) == result
+            @test sum(B[:, pi]) == result
+        end
+    end
+
+    @testset "SSHAverager + SSHBinner utils" begin
+        for T in (SSHBinner, SSHAverager)
+            B = T(100, method = partition_sphere1)
+            @test length(B) == 108
+            if T == SSHBinner
+                push!(B, 0.5, 0.2)
+            else
+                push!(B, 0.5, 0.2, 1.0)
+            end
+            @test minimum(B) ≈ 0.0
+            @test maximum(B) ≈ 1.0
+            # may be changed...
+            @test size(B) == [1, 7, 12, 16, 18, 18, 16, 12, 7, 1]
+
+            if T == SSHBinner
+                append!(B, rand(100), rand(100))
+                @test get_values(B) == B.bins
+                C = T(B.bins, method = partition_sphere1)
+                @test C == B
+            else
+                append!(B, rand(100), rand(100), rand(100))
+                @test get_values(B) == B.sums ./ max.(1, B.counts)
+                C = T(B.sums, B.counts, method = partition_sphere1)
+                @test C == B
+            end
+        end
+
+        for T in (SSHBinner, SSHAverager)
+            B = T(100, method = partition_sphere2)
+            @test length(B) == 98
+            if T == SSHBinner
+                push!(B, 0.5, 0.2)
+            else
+                push!(B, 0.5, 0.2, 1.0)
+            end
+            @test minimum(B) ≈ 0.0
+            @test maximum(B) ≈ 1.0
+            # may be changed...
+            @test size(B) == [1, 8, 16, 16, 16, 16, 16, 8, 1]
+
+            if T == SSHBinner
+                append!(B, rand(100), rand(100))
+                @test get_values(B) == B.bins
+                C = T(B.bins, method = partition_sphere2)
+                @test C == B
+            else
+                append!(B, rand(100), rand(100), rand(100))
+                @test get_values(B) == B.sums ./ max.(1, B.counts)
+                C = T(B.sums, B.counts, method = partition_sphere2)
+                @test C == B
             end
         end
     end
 
-    @testset "Indexing" begin
-        B = SSHBinner(10_000)
-        append!(B, [[cos(pi), sin(pi), 0.0] for _ in 1:1000])
-
-        # true position is 4969
-        @test B.bins[4969] == 1000
-
-        # indexing
-        @test B[pi/2, pi] == 1000
-        @test sum(B[pi/2, :]) == 1000
-        @test sum(B[:, pi]) == 1000
-    end
 end

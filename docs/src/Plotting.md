@@ -1,6 +1,6 @@
 # Plotting with Makie
 
-SphereSurfaceHistogram makes use of `Requires.jl` to dynamically load plotting and mesh generation functionality when `AbstractPlotting` is present. Using Makie recipes, the following plotting methods will be exposed:
+SphereSurfaceHistogram makes use of `Requires.jl` to dynamically load plotting and mesh generation functionality when `Makie` is present. Using Makie recipes, the following plotting methods will be exposed:
 
 ```julia
 scatter(binner)
@@ -63,18 +63,18 @@ All examples use `binner = SSHBinner(500)` with one million random vectors `norm
 
 # Plotting without Makie
 
-If Makie is not your cup of tea you can still make use of the mesh, point and line generation methods defined in SphereSurfaceHistogram. They are exposed by `using GeometryTypes`. The following methods are implemented:
+If Makie is not your cup of tea you can still make use of the mesh, point and line generation methods defined in SphereSurfaceHistogram. They are exposed by `using GeometryBasics`. The following methods are implemented:
 
 ```julia
-to_cartesian(theta, phi)
+to_cartesian([radius,] theta, phi)
 ```
 
-Returns the cartesian representation of a unit vector given by two angles in spherical coordiantes
+Returns the cartesian representation of a unit vector given by two angles in spherical coordiantes.
 
 ---
 
 ```julia
-face_mesh(binner[, extrude=0])
+face_mesh(binner[, radius, extrude=0])
 ```
 
 This method generates a disconnected `GLNormalMesh` where (connected) faces represent bin areas. By setting `extrude > 0` these faces will be extruded outwards, visualizing where bins are located.
@@ -84,7 +84,7 @@ Note that this representation is not entirely correct as it does not include the
 ---
 
 ```julia
-vertex_mesh(binner)
+vertex_mesh(binner[, radius])
 ```
 
 Generates a `GLNormalMesh` where each point corresponds to the center of a bin. The vertices of this mesh are in the same order as the bins in `binner.bins`. Thus you can directly map bins to colors and attach them to the mesh.
@@ -94,7 +94,7 @@ This function is used by `Makie.mesh` and `histogram` to generate the visualizat
 ---
 
 ```julia
-bin_positions(binner)
+bin_positions(binner[, radius])
 ```
 
 Returns an array of `Point3f0` corresponding to the centers of each bin. The array is in the same order as `binner.bins`.
@@ -102,7 +102,7 @@ Returns an array of `Point3f0` corresponding to the centers of each bin. The arr
 ---
 
 ```julia
-line_segments_minimal(binner)
+line_segments_minimal(binner[, radius])
 ```
 
 Returns an array of `Point3f0` which correspond to line segments. These segments mark the area of each bin, simialrly to `face_mesh`. This version does not interpolate any points so small binners may look more rectangular than they should.
@@ -110,7 +110,7 @@ Returns an array of `Point3f0` which correspond to line segments. These segments
 ---
 
 ```julia
-line_segments(binner[; N_fragments])
+line_segments(binner[; radius, N_fragments])
 ```
 
 Just like `line_segments_minimal`, this function generates an array of Points corresponding to line segments marking the area of each bin. This method however include interpolation, so that each line is curved.

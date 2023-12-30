@@ -20,3 +20,15 @@ partition_sphere2
 ```
 
 Note that both methods are optimized by another function, so that the area of each bin is equal.
+
+# SSHAverager
+
+The `SSHAverager` follows the same interface and provides the same methods:
+
+```@docs
+SSHAverager(::Real)
+```
+
+```@docs
+SSHAverager(::Vector, ::Vector)
+```
