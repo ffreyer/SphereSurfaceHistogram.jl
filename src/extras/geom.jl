@@ -5,14 +5,14 @@ Calculates the cartesian vector (x, y, z) for a given pair of angles (polar/z
 angle theta, azimut/xy angle phi).
 """
 function to_cartesian(radius, theta, phi)
-    Vec3f0(
+    return Vec3f(
         radius * sin(theta) * cos(phi),
         radius * sin(theta) * sin(phi),
         radius * cos(theta)
     )
 end
 function to_cartesian(theta, phi)
-    Vec3f0(
+    return Vec3f(
         sin(theta) * cos(phi),
         sin(theta) * sin(phi),
         cos(theta)
