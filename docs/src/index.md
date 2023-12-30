@@ -36,7 +36,7 @@ append!(binner, [[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
 
 ```@repl
 using SphereSurfaceHistogram
-binner = SSHaverager(10_000)
+binner = SSHAverager(10_000)
 push!(binner, [1.0, 0.0, 0.0], 1.6)
 append!(binner, [[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], [0.3, 0.6])
 ```
@@ -45,6 +45,8 @@ You can also push to a binner using angles of a spherical coordinate system.
 This follows the physics convention as mentioned on [wikipedia](https://en.wikipedia.org/wiki/Spherical_coordinate_system), i.e. with $theta \in (0, pi)$ being the angle between the z axis and the vector and $phi \in (0, 2pi)$ extending counterclockwise from the x axis.
 
 ```@repl
+using SphereSurfaceHistogram
+binner = SSHBinner(10_000)
 push!(binner, 0.5pi, 1.7pi) # theta, phi
 ```
 
