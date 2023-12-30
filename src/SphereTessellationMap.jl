@@ -1,13 +1,24 @@
-abstract type AbstractSSH end
-# Child must contain:
-# thetas, phi_divisions, phi_N_over_2pi, phi_cumsum, N_thetas, theta_factor
-# must implement get_value and get_values
+struct SphereTessellationMap
+    # positions of bins in theta
+    # these may be irregular
+    thetas::Vector{Float64}
+
+    # number of divisions in phi direction. First bin is at phi = 0
+    phi_divisions::Vector{Int64}
+
+    # helpers for fast pushing
+    zs::Vector{Float64}
+    phi_N_over_2pi::Vector{Float64}
+    phi_cumsum::Vector{Int64}
+    N_thetas::Float64
+    theta_factor::Float64
+end
 
 ################################################################################
 ### Generic Constructor
 ################################################################################
 
-function construct(T::Type{<: AbstractSSH}, thetas::Vector{Float64}, phi_divisions::Vector{Int64})
+function SphereTessellationMap(thetas::Vector{Float64}, phi_divisions::Vector{Int64})
     # Precalculate N/2pi for push!
     # use slightly more than 2pi to guarantee phi * phi_N_over_pi ∈ [0, 1)
     PI_PLUS = 2.0pi + 1e-14
@@ -17,27 +28,27 @@ function construct(T::Type{<: AbstractSSH}, thetas::Vector{Float64}, phi_divisio
     phi_cumsum = cumsum(phi_divisions)
 
     # Precalculate z(θ) for push!
-    # move slightly to negative values to guarantee that for an input value
-    # value[3] >= minimum(zs)
+    # move slightly to negative values to guarante value[3] >= minimum(zs)
     zs = cos.(thetas) #.- 1e-14 # 1...-1
     zs[end] -= 1e-14
+
+    # also shift theta to be save with float precision issues
+    thetas[1] -= 1e-14
+    thetas[end] += 1e-14
 
     # for converting z values/angles to indices
     # to avoid conversions to Float64
     N_thetas = Float64(length(thetas)-1)
     theta_factor = Float64(length(thetas)-1) / (pi + 1e-14)
 
-    N_bins = sum(phi_divisions)
-    bins = zeros(Int64, N_bins)
-
-    return T(thetas, phi_divisions, zs, phi_N_over_2pi, phi_cumsum, N_thetas, theta_factor, bins)
+    return SphereTessellationMap(thetas, phi_divisions, zs, phi_N_over_2pi, phi_cumsum, N_thetas, theta_factor)
 end
 
 
-(T::Type{<: AbstractSSH})(N_bins::Real; kwargs...) = T(round(Int64, N_bins); kwargs...)
-function (T::Type{<: AbstractSSH})(N_bins::Int64; method=partition_sphere2)
+SphereTessellationMap(N_bins::Real; kwargs...) = SphereTessellationMap(round(Int64, N_bins); kwargs...)
+function SphereTessellationMap(N_bins::Int64; method=partition_sphere2)
     thetas, phi_divisions = partition_sphere_optim(4pi/N_bins, method=method)
-    return construct(T, thetas, phi_divisions)
+    return SphereTessellationMap(thetas, phi_divisions)
 end
 
 """
@@ -62,7 +73,7 @@ function partition_sphere2(dA)
     # This will now be our goal theta-width
     dtheta_goal = next_theta(dA, 0.0, 2pi)
 
-    # Devide 2pi by phi_div, such that phi = 2pi/n with n integer
+    # Divide 2pi by phi_div, such that phi = 2pi/n with n integer
     phi_divs = Int64[1]
     thetas = Float64[0.0, dtheta_goal]
 
@@ -251,25 +262,41 @@ end
 
 # Note:
 # Tested for 10, 1000, 10_000_000 bins, each with 1_000_000 random spins pushed
-@inline function fast_theta_index_search(B::AbstractSSH, z)
-    index = fast_theta_index_approximation(z, B.N_thetas)
-    if z > B.zs[index]
+@inline function fast_theta_index_search_z(tess::SphereTessellationMap, z)
+    index = fast_theta_index_approximation(z, tess.N_thetas)
+    if z > tess.zs[index]
         while true
             index -= 1
-            z <= B.zs[index] && (return index)
+            (z <= tess.zs[index]) && (return index)
         end
-    elseif B.zs[index] >= z
+    else
         while true
             index += 1
-            B.zs[index] < z && (return index-1)
+            (tess.zs[index] < z) && (return index-1)
         end
     end
     return index
 end
 
-function bin_index(B::AbstractSSH, vec)
-    theta_index = fast_theta_index_search(B, vec[3])
-    phi_index = if B.phi_divisions[theta_index] == 1
+@inline function fast_theta_index_search_theta(tess::SphereTessellationMap, theta)
+    index = trunc(Int64, tess.theta_factor * theta) + 1
+    if theta < tess.thetas[index]
+        while true
+            index -= 1
+            (theta >= tess.thetas[index]) && (return index)
+        end
+    else
+        while true
+            index += 1
+            (tess.thetas[index] > theta) && (return index-1)
+        end
+    end
+    return index
+end
+
+function bin_index(tess::SphereTessellationMap, vec)
+    theta_index = fast_theta_index_search_z(tess, vec[3])
+    phi_index = if tess.phi_divisions[theta_index] == 1
         1
     else
         # Normalize xy-component
@@ -282,46 +309,19 @@ function bin_index(B::AbstractSSH, vec)
             2.0pi - acos(vec[1]/R)
         end
 
-        trunc(Int64, phi * B.phi_N_over_2pi[theta_index]) + 1
+        trunc(Int64, phi * tess.phi_N_over_2pi[theta_index]) + 1
     end
 
     # Calculate position in bins
-    l = theta_index > 1 ? B.phi_cumsum[theta_index-1] : 0
+    l = theta_index > 1 ? tess.phi_cumsum[theta_index-1] : 0
     return l + phi_index
 end
 
-function bin_index(B::AbstractSSH, theta, phi)
-    theta_index = trunc(Int64, B.theta_factor * theta) + 1
-    phi_index = trunc(Int64, B.phi_N_over_2pi[theta_index] * phi) + 1
+function bin_index(tess::SphereTessellationMap, theta, phi)
+    theta_index = fast_theta_index_search_theta(tess, theta)
+    phi_index = trunc(Int64, tess.phi_N_over_2pi[theta_index] * phi) + 1
 
     # Calculate position in bins
-    l = theta_index > 1 ? B.phi_cumsum[theta_index-1] : 0
+    l = theta_index > 1 ? tess.phi_cumsum[theta_index-1] : 0
     return l + phi_index
-end
-
-
-"""
-    append!(B::SSHBinner, values)
-
-Bins an array of values (three dimensional unit vectors).
-"""
-function Base.append!(B::AbstractSSH, values)
-    for v in values
-        push!(B, v)
-    end
-    nothing
-end
-
-function Base.append!(B::AbstractSSH, as, bs)
-    for (a, b) in zip(as, bs)
-        push!(B, a, b)
-    end
-    nothing
-end
-
-function Base.append!(B::AbstractSSH, as, bs, cs)
-    for (a, b, c) in zip(as, bs, cs)
-        push!(B, a, b, c)
-    end
-    nothing
 end

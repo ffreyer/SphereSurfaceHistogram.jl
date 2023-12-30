@@ -2,7 +2,9 @@ module SphereSurfaceHistogram
 
 using Requires
 
-include("generic.jl")
+abstract type AbstractSSH end
+
+include("SphereTessellationMap.jl")
 include("counting.jl")
 include("averaging.jl")
 include("utils.jl")

@@ -29,7 +29,8 @@ Generates a tiled/disconnected mesh where each face represents a bin.
 `extrude` allows faces to be moved outwards (≈ (1 + extrude)eᵣ). For
 `extrude > 0` the faces will sperate, making their shape easier to see.
 """
-function face_mesh(B::AbstractSSH, radius = 1, extrude = 0)
+face_mesh(B::AbstractSSH, radius = 1, extrude = 0) = face_mesh(B.tessellation, radius, extrude)
+function face_mesh(B::SphereTessellationMap, radius, extrude)
     vertices = Point3f[]
     faces = GLTriangleFace[]
 
@@ -94,6 +95,9 @@ end
 
 # TODO: this is not correct - faces missplaced
 function voxel_mesh(B::AbstractSSH; radius = 1, thickness = 0.1)
+    return voxel_mesh(B.tessellation, radius, thickness)
+end
+function voxel_mesh(B::SphereTessellationMap, radius, thickness)
     _mesh = face_mesh(B, radius)
     vs = decompose(Point3f, _mesh)
     fs = faces(_mesh)
@@ -152,7 +156,8 @@ corresponding to the vertices of this mesh (in order). This can be plotted with
 
 See also: [`bin_positions`](@ref), [`face_mesh`](@ref)
 """
-function vertex_mesh(B::AbstractSSH, radius = 1.0)
+vertex_mesh(B::AbstractSSH, radius = 1.0) = vertex_mesh(B.tessellation, radius)
+function vertex_mesh(B::SphereTessellationMap, radius)
     faces = GLTriangleFace[]
 
     N = 0
@@ -213,7 +218,8 @@ This list is equivalent to the vertices used in `vertex_mesh(B)`.
 
 See also: [`vertex_mesh`](@ref)
 """
-function bin_positions(B::AbstractSSH, radius = 1.0)
+bin_positions(B::AbstractSSH, radius = 1.0) = bin_positions(B.tessellation, radius)
+function bin_positions(B::SphereTessellationMap, radius)
     points = Vector{Point3f}(undef, length(B))
     points[1] = Point3f(0, 0, radius)
 
@@ -242,7 +248,8 @@ sense that doesn't interpolate any points.
 
 See also: [`line_segments`](@ref)
 """
-function line_segments_minimal(B::AbstractSSH, radius = 1)
+line_segments_minimal(B::AbstractSSH, radius = 1) = line_segments_minimal(B.tessellation, radius)
+function line_segments_minimal(B::SphereTessellationMap, radius)
     lines = Point3f[]
 
     # first ring
@@ -293,6 +300,9 @@ Specifically, points are added to an arc, such that it would include at least
 See also: [`line_segments_minimal`](@ref)
 """
 function line_segments(B::AbstractSSH, radius = 1.0; N_fragments=32)
+    return line_segments(B.tessellation, radius, N_fragments)
+end
+function line_segments(B::SphereTessellationMap, radius, N_fragments)
     lines = Point3f[]
 
     # horizontal rings
