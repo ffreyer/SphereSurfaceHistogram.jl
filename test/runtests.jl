@@ -64,15 +64,54 @@ using Test
     end
 
     @testset "Indexing" begin
-        B = SSHBinner(10_000)
-        append!(B, [[cos(pi), sin(pi), 0.0] for _ in 1:1000])
+        for T in (SSHBinner, SSHAverager)
+            B = T(10_000)
+            if T == SSHBinner
+                append!(B, [[cos(pi), sin(pi), 0.0] for _ in 1:1000])
+                # true position is 4969
+                @test B.bins[4969] == 1000
+            else
+                append!(B, [[cos(pi), sin(pi), 0.0] for _ in 1:1000], ones(1000))
+                # true position is 4969
+                @test B.counts[4969] == 1000
+                @test B.sums[4969] == 1000.0
+            end
 
-        # true position is 4969
-        @test B.bins[4969] == 1000
+            result = SphereSurfaceHistogram.get_value(B, 4969)
+            # indexing
+            @test B[pi/2, pi] == result
+            @test sum(B[pi/2, :]) == result
+            @test sum(B[:, pi]) == result
+        end
+    end
 
-        # indexing
-        @test B[pi/2, pi] == 1000
-        @test sum(B[pi/2, :]) == 1000
-        @test sum(B[:, pi]) == 1000
+    @testset "SSHAverager + SSHBinner utils" begin
+        for T in (SSHBinner, SSHAverager)
+            B = T(100, method = partition_sphere1)
+            @test length(B) == 108
+            if T == SSHBinner
+                push!(B, 0.5, 0.2)
+            else
+                push!(B, 0.5, 0.2, 1.0)
+            end
+            @test minimum(B) ≈ 0.0
+            @test maximum(B) ≈ 1.0
+            # may be changed...
+            @test size(B) == [1, 7, 12, 16, 18, 18, 16, 12, 7, 1]
+        end
+
+        for T in (SSHBinner, SSHAverager)
+            B = T(100, method = partition_sphere2)
+            @test length(B) == 98
+            if T == SSHBinner
+                push!(B, 0.5, 0.2)
+            else
+                push!(B, 0.5, 0.2, 1.0)
+            end
+            @test minimum(B) ≈ 0.0
+            @test maximum(B) ≈ 1.0
+            # may be changed...
+            @test size(B) == [1, 8, 16, 16, 16, 16, 16, 8, 1]
+        end
     end
 end

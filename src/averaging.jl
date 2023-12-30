@@ -38,7 +38,7 @@ unit vector) to the mean.
 function Base.push!(B::SSHAverager, vec::AbstractVector, value::Real)
     idx = bin_index(B.tessellation, vec)
     B.sums[idx] += value
-    B.counts[] += 1
+    B.counts[idx] += 1
     return nothing
 end
 
@@ -57,5 +57,5 @@ function Base.push!(B::SSHAverager, theta::Real, phi::Real, value::Real)
     return nothing
 end
 
-get_value(B::SSHAverager, idx::Int) = B.sums[idx] / B.counts[idx]
-get_values(B::SSHAverager) = B.sums ./ B.counts
+get_value(B::SSHAverager, idx::Int) = B.sums[idx] / max(1, B.counts[idx])
+get_values(B::SSHAverager) = B.sums ./ max.(1, B.counts)
