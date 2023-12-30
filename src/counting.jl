@@ -4,6 +4,10 @@ struct SSHBinner <: AbstractSSH
     bins::Vector{Int64}
 end
 
+function Base.:(==)(a::SSHBinner, b::SSHBinner)
+    return (a.tessellation == b.tessellation) && (a.bins == b.bins)
+end
+
 function SSHBinner(tess::SphereTessellationMap)
     return SSHBinner(tess, zeros(Int64, length(tess)))
 end

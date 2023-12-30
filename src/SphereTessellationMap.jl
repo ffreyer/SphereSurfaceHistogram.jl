@@ -14,9 +14,12 @@ struct SphereTessellationMap
     theta_factor::Float64
 end
 
-################################################################################
-### Generic Constructor
-################################################################################
+function Base.:(==)(a::SphereTessellationMap, b::SphereTessellationMap)
+    return (a.thetas == b.thetas) && (a.phi_divisions == b.phi_divisions) &&
+        (a.zs == b.zs) && (a.phi_N_over_2pi == b.phi_N_over_2pi) &&
+        (a.phi_cumsum == b.phi_cumsum) && (a.N_thetas == b.N_thetas) &&
+        (a.theta_factor == b.theta_factor)
+end
 
 function SphereTessellationMap(thetas::Vector{Float64}, phi_divisions::Vector{Int64})
     # Precalculate N/2pi for push!

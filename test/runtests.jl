@@ -98,6 +98,18 @@ using Test
             @test maximum(B) ≈ 1.0
             # may be changed...
             @test size(B) == [1, 7, 12, 16, 18, 18, 16, 12, 7, 1]
+
+            if T == SSHBinner
+                append!(B, rand(100), rand(100))
+                @test get_values(B) == B.bins
+                C = T(B.bins, method = partition_sphere1)
+                @test C == B
+            else
+                append!(B, rand(100), rand(100), rand(100))
+                @test get_values(B) == B.sums ./ max.(1, B.counts)
+                C = T(B.sums, B.counts, method = partition_sphere1)
+                @test C == B
+            end
         end
 
         for T in (SSHBinner, SSHAverager)
@@ -112,6 +124,18 @@ using Test
             @test maximum(B) ≈ 1.0
             # may be changed...
             @test size(B) == [1, 8, 16, 16, 16, 16, 16, 8, 1]
+
+            if T == SSHBinner
+                append!(B, rand(100), rand(100))
+                @test get_values(B) == B.bins
+                C = T(B.bins, method = partition_sphere2)
+                @test C == B
+            else
+                append!(B, rand(100), rand(100), rand(100))
+                @test get_values(B) == B.sums ./ max.(1, B.counts)
+                C = T(B.sums, B.counts, method = partition_sphere2)
+                @test C == B
+            end
         end
     end
 end

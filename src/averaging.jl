@@ -5,6 +5,10 @@ struct SSHAverager <: AbstractSSH
     counts::Vector{Int64}
 end
 
+function Base.:(==)(a::SSHAverager, b::SSHAverager)
+    return (a.tessellation == b.tessellation) && (a.sums == b.sums) && (a.counts == b.counts)
+end
+
 function SSHAverager(tess::SphereTessellationMap)
     return SSHAverager(tess, zeros(Float64, length(tess)), zeros(Int64, length(tess)))
 end
