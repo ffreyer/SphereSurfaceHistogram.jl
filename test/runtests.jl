@@ -61,6 +61,20 @@ using Test
                 @test all(center_matched_bin)
             end
         end
+
+        # Check bin smoothness
+        B = SSHBinner(10_000)
+        append!(B, pi/2 * ones(100_000), range(0, 2pi, 100_001)[1:end-1])
+        @test B.bins[4905] == 0
+        mi, ma = extrema(view(B.bins, 4906:5033))
+        @test (781 <= mi) && (ma <= 782)
+        @test B.bins[5034] == 0
+
+        B = SSHBinner(10_000)
+        append!(B, range(0, pi, 100_001)[1:end-1], zeros(100_000))
+        ws = B.tessellation.thetas[2:end] .- B.tessellation.thetas[1:end-1]
+        mi, ma = extrema(B[:, 0.0] ./ ws)
+        @test (31780 <= mi) && (ma <= 31880)
     end
 
     @testset "Indexing" begin
@@ -138,4 +152,5 @@ using Test
             end
         end
     end
+
 end
