@@ -30,5 +30,5 @@ SSHAverager(::Real)
 ```
 
 ```@docs
-SSHAverager(::Vector, ::Vector)
+SSHAverager(::Vector{Float64}, ::Vector{Int64})
 ```
